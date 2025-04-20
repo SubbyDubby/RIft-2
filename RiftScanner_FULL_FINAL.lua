@@ -5,106 +5,110 @@ local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2T
 local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363451259016712192/OIMNA2MKvtfFW2IZOj5zDyoqhDYFlV-uU1GARyJwWSPSVHQzDAvSThojSOf1n9f5E6de" -- Replace with your special webhook for 25x rifts
 local PLACE_ID = 85896571713843
 local jobIds = {
-    "caf64c7b-3514-4481-8054-2a8986b14986",
-    "239f7147-5147-4356-a64d-94db4c437fda",
-    "e100ab0a-5154-4ed6-9321-b43446083358",
-    "02e929b2-7ed7-45db-9a35-a9c3caeac426",
-    "ab47a03d-0a60-4759-9c76-3bfad3c301d2",
-    "4c26270d-5493-49e8-bacb-bef42ad133ac",
-    "e838b14d-5411-4a43-a306-d018b413e7d0",
-    "9ea622a4-2648-4761-9f85-093e9ecc01c4",
-    "a3ed1dcf-b56e-4989-a765-0c156bb081ed",
-    "39e4e265-0548-4bfa-9574-2409335ed881",
-    "4cc2a3a3-1ab9-44c8-a0b7-ca2842a8e978",
-    "b6cdafe2-0b7c-484e-bc5a-aa4e742283bd",
-    "48850f3e-6034-464e-afe5-990e8027dc19",
-    "90e2a5ab-ad13-4312-a374-e9006e639ddb",
-    "6de54149-95b5-429c-bd6d-78a8c61b194b",
-    "ea6355d2-e64b-4610-9b51-3c97ab947f51",
-    "0b97d697-572b-42dd-99c3-1a53766a2648",
-    "00a39509-d0ac-4df3-b238-6a66fa1dbec5",
-    "9490743f-7786-44b2-a64d-ecc281313135",
-    "b1c7ae58-93e8-4802-9bdf-a9aa9c02d39b",
-    "c9e47af7-083b-498e-a6df-3329179af9f0",
-    "55b1c43a-5894-4361-907e-373ae0973d30",
-    "31ddb552-ae53-4f6d-8cd4-d6d38a93809d",
-    "5ad70d20-83af-424a-a8c6-97891995233b",
-    "5d1607ea-c6ec-4a67-a437-8b8a0713d452",
-    "9aaf0a81-30cf-42ac-925c-a296ecb37daa",
-    "f27b6ccb-7121-4975-a0e4-37d7cf41cbbc",
-    "74dfd692-7364-4289-9f30-48652ed2df4d",
-    "ff4ca6fa-91c6-4a39-b58b-df8786cb518a",
-    "06d1a44b-2a4b-4efd-86e5-1039f519f91f",
-    "42b024fd-e463-4f9c-900a-1532049898ec",
-    "5b44b33a-bdbe-4ad1-88d6-6b80c67350a9",
-    "520a475b-8954-48dc-8911-7ed1cbcaf199",
-    "1d31cb5f-4400-441d-b818-e7203ba5b4c5",
-    "f9bad6d8-839d-4cdb-86b5-f0192effe23a",
-    "cc53e3be-1cb1-4477-938a-40a68ea1a05c",
-    "3429a682-5333-4467-9b01-1cfc2c2ed64c",
-    "f39dd8cb-80f8-4952-ab6c-d9117065c6d6",
-    "33044390-a2c0-40fb-9d98-5137f27125f0",
-    "6df5f8ad-aa0f-400c-ae82-a2d9e7ae8bab",
-    "06ca471f-ae4e-48e0-8a3f-88add5cbf207",
-    "178ad271-5956-4a1d-9c0b-dfd2e7bc7b2e",
-    "436c62f3-7264-4904-908a-096b34fa86ee",
-    "8316068f-1568-4de7-a722-fd9763dead8e",
-    "f3d63c93-bcee-41c8-94d9-76d991c68b99",
-    "2a306811-bf54-4b56-9436-6740feac5dbe",
-    "ef568e97-f3ae-403c-92ab-aaa66c0dfe62",
-    "4b9f816d-0c6f-4a57-b1a1-30c5c855abbf",
-    "4b8c8249-4f3b-4ef5-870e-041788eae3a0",
-    "c123ab08-0f16-4889-bce9-ad00e5025ae3",
-    "d73f0123-f569-47da-b7e6-6c5e10a030ab",
-    "908a7aa2-cc3a-420a-a3b0-0c8360df641b",
-    "cd2eed28-e344-4664-ba54-95bf3bd5f274",
-    "b4d625ed-f39b-455e-8053-96c5aaa50ad6",
-    "3447c7fc-15cf-4ab9-90b3-af8e780b3a42",
-    "bd6ef944-df0f-45ea-a517-5d936d89637d",
-    "3c6e0ded-3bd3-49d7-b46b-67662172b43c",
-    "55ae924a-d7c5-402d-a29a-a8d11edc059f",
-    "a01aa2ff-ee91-4abe-97c5-1ed1ca7c0c74",
-    "92dafe78-0264-48c7-b607-6a9342c73277",
-    "446718c4-8932-4d33-9cf2-66b54a9eaf6a",
-    "0ae4556a-fc35-4d88-bf21-9ae885890265",
-    "cf0d228a-615e-42ff-9d87-195a70e9ce3f",
-    "20e1425e-2589-4d6f-8056-b153b81884aa",
-    "32607c74-46a5-41b5-8beb-7f930fa9386e",
-    "bdac0342-6fd6-44de-87d7-bd9fdb5ced32",
-    "3dc5df7a-bcca-4005-bd3b-5b290fd05162",
-    "98f43975-cda3-41f4-b87c-e76b366c2cc4",
-    "a922077a-87ff-482c-b824-930ead241b30",
-    "cdaf37a5-6ff2-419a-bd9e-f639584fdddf",
-    "d7540879-2d62-49ba-85cf-b11fa75b52d6",
-    "23f76589-9595-4ddf-8dcb-a96194f5f6c5",
-    "f41cff00-71ac-475d-b682-1d1852afa2e9",
-    "cb02faa3-587d-4ba8-b978-4266ddd1ae1f",
-    "5c5998f9-4f08-434c-972f-18b7b5608905",
-    "be5ef998-f250-4533-8e4b-0699e33e20f3",
-    "27ff64ba-3aaf-456f-9a65-fa9a44ba5889",
-    "f5cb5acf-a2e4-43c4-826a-a9118cb08888",
-    "8a3cc76b-9c4b-41a5-b95c-dd9650d0e5a4",
-    "b700ce41-c121-4cfb-91bf-e52f01e5e1d2",
-    "8e185a5a-3630-4dbe-9eb3-9bf80ceabe3e",
-    "c52b835c-82ce-4235-92fe-f0ae2749045f",
-    "f70c3fcf-5b84-4dd0-b8a0-01fbdebf3cd0",
-    "028879f3-f7a6-4938-856c-c09e0fb2cdef",
-    "a88f7878-3acc-42a5-9961-4099b4aaaf95",
-    "4c008771-eb9b-41af-8d08-5190407a941f",
-    "66c585d9-a09d-4b87-862d-cd694a4bdbba",
-    "437b0dce-ef26-4814-9a15-8e855fbfbc79",
-    "2dbf01c4-f2da-4fff-9805-e50dc0fc64c3",
-    "76eb732e-b4e4-495d-8253-25d2b82d1451",
-    "eb3b87b8-5258-47e1-a2a3-05c4d57d8db5",
-    "6836c03d-e890-4a1e-8bb8-5437d269302d",
-    "5f600d3e-a6d2-484f-98c1-a2e9edddf9f1",
-    "55048463-41dd-4d26-a19f-bdef25cdf483",
-    "861e9d61-0770-4151-b09f-2123127c2194",
-    "70cee3cd-dda8-45d9-b6ce-0bff45513984",
-    "a963b9b1-9f85-420b-b89f-70cf2121042d",
-    "80c5aee3-2657-46a6-9e68-058eccb156ec",
-    "d4fceb42-3233-4e90-9d55-49ce8af35180",
-    "3fcdd862-6f6b-48b4-8511-269d6e254f27"
+    "eec54f87-d328-4e3a-8722-1f4b1ffe835f",
+    "2125d925-26ee-478d-8ab5-b01348c583ed",
+    "469c54d7-4f69-411b-8163-a77d25dc23ae",
+    "4376faec-6f36-4c8d-9656-1b25f527b554",
+    "5ea8def7-86ae-492f-bb70-dab67aac7ee7",
+    "8f1b850e-04e4-4c10-987c-cf6d34dcc525",
+    "9469aa76-edee-45bc-b4a3-1957b8c83f33",
+    "16531237-08cc-482d-bdc0-83f7b7bc0517",
+    "5fe08d34-c495-42a0-a03b-26ebbb7aa27e",
+    "976f8a0c-18a3-4950-a04a-7b06edb54a86",
+    "ac9ab1df-521f-478c-ac8c-71527d14b2fe",
+    "11ffb114-b12a-47fe-a3e5-2bb2ef00f923",
+    "f7ff62b6-86b2-4f1c-82c5-2ffc80007ed6",
+    "245e0c01-c1de-4916-aae3-63e843698f7a",
+    "c55d75df-e6fc-4c75-8376-36dd8b5d8d1c",
+    "4a656618-0703-4e9e-96aa-615171ca9923",
+    "2217f614-2877-4cdc-b898-8903e23ca4a2",
+    "0cd90ec8-1aa0-4ebc-8cf2-a7c18f1fe6a6",
+    "3956f39e-8c01-455a-8f93-e151955bf51b",
+    "ca2f34c0-e370-4608-ab57-62b39d237e37",
+    "2943f9e3-1226-4f16-be4b-7629bfdc3ac2",
+    "dd1418c2-e4f4-4902-a75f-c64b6f3a568b",
+    "02f00c99-bbf0-4d0f-b14c-70a550323852",
+    "3c901806-6199-4084-890c-419a31e4b1b1",
+    "46e96bc2-929f-4074-88cb-39821ae388de",
+    "c8e702a6-654c-4de5-b3e8-17382cb3b600",
+    "f3be4a2a-a8ee-4a72-bc8d-59a237320c97",
+    "ae7ab1dc-4566-4d69-8277-9104e592342e",
+    "cbed8949-a714-4a4b-94c6-f5a766302335",
+    "13b702ed-24a8-4f71-a007-c4f24c02ba9a",
+    "bb802102-7d67-4103-8c3f-b767f66ff113",
+    "07cc8337-e462-46b8-8fb3-529a88b50446",
+    "8a40ad7d-5714-441d-a962-fc71613a0a0d",
+    "36c3c526-2294-43c5-951d-cca7ca730962",
+    "c2cc1cce-6a32-47be-b2c0-83e90ae2dc6e",
+    "8a639f65-4277-4c0f-bc43-200c057ca486",
+    "438c1662-defe-47e5-8d8d-8b6850b72a53",
+    "f6d0f69c-a525-4e74-8d49-934088b89320",
+    "e8216460-3c6a-4d16-b612-f1b0451d9430",
+    "ad29156c-2618-413e-ab61-c52a10592b44",
+    "d4cb81da-1b7b-46a9-a4dc-d5fcee106b7b",
+    "c68c8985-281a-476f-af92-156364df15c2",
+    "db58229e-cd20-44c8-91ab-00f4233bc802",
+    "ab56f7f4-069d-4f52-861d-91ca5d040f85",
+    "d3ffb940-a0e9-435e-9f7c-8b76dfd93e22",
+    "c0ba0f33-44ad-42b7-935a-3c14c41f8686",
+    "fddc92e9-b984-4e15-b43e-7127bb6ea85e",
+    "bb72c9da-db46-4026-a37c-22910f8c8d45",
+    "4bb1885e-50bd-482d-ab6c-7f1cd7407b91",
+    "f262718b-0425-4844-8965-bae44ce3a459",
+    "cbc5eb42-bb22-46bd-977c-c9251cc9ee2d",
+    "8209aca8-fc6d-4ac4-a744-a975848d2f1b",
+    "c177dddc-a2f9-4864-9532-546c3a7db187",
+    "1868b816-4240-4c45-a9f4-83df79514069",
+    "1f49b368-1270-4654-b01d-5cd6e2290c32",
+    "f0d2ce35-ebbd-401a-9c2c-3f829827c4d9",
+    "8885fe04-fccc-48bf-9f0c-f187711dab12",
+    "df5208cb-4e0f-4d15-8f07-873a42b0b3ca",
+    "b80dee6d-7232-4edd-a9b6-ba6b75f89894",
+    "851a8b0f-63bf-4642-8a6f-fdd2be6729f6",
+    "15bb2ba9-5ed8-4d81-a7df-7ed0f1904e6f",
+    "b02adbdf-c5c9-4b90-9ba8-96da01844e2e",
+    "acf8b1ea-91e6-41ba-8eb6-0a18f56abe16",
+    "47d6e6af-7cc3-486d-9a4d-d2c49a0b20a1",
+    "5990f455-975d-42e0-a9e6-92c598a61abc",
+    "8453a7ff-3dcd-47f9-9732-bbba52d1694d",
+    "487505fc-49c7-49be-b966-109e04625988",
+    "46799147-004f-4f04-b268-a8678c35049c",
+    "0fdcdee5-04a5-4f27-b12a-afaad9efe928",
+    "9cedf6ce-e359-4dba-9a0a-f653c8e6fe74",
+    "fd28a70a-6cf7-4b46-8218-56da651a43d4",
+    "61034f62-d594-41fe-a0e9-2bf6b1f8406c",
+    "f9de37ed-7a3d-49a9-a530-461fef4553f0",
+    "90b5056b-0a77-419a-bcc9-42262a826d74",
+    "7801c131-019e-48fb-92b5-b79abcbd7a20",
+    "f1cc068e-453e-4765-8fa7-38695ba02845",
+    "2d4e61c3-e45f-4ec3-a8fa-786cc8f63349",
+    "a68f11e7-f5ce-41fe-bea3-7fdf93a27d3a",
+    "c01e60ea-d3f4-4d64-800b-245cffcface8",
+    "e480728a-f689-4f43-8acd-f7c11221e6a9",
+    "9d9f1628-91ed-4c38-a607-595adf54d67e",
+    "c541ef2b-90f1-4069-9822-d6917fb5c007",
+    "9284b2e1-06ac-42e2-b031-ca21fcb244f2",
+    "4b1c1148-1209-4b3e-b8c3-a1dd8beec9af",
+    "c5638b29-5e3e-4415-86ad-56db775f4675",
+    "899341d8-ad01-4ba1-a5c0-2aafea3a2a02",
+    "ede5bab6-e654-45c4-8ff1-c93300c80d8a",
+    "85950cac-42a0-448f-8d7f-677da9c52f40",
+    "842a8471-a286-415b-8edf-cde3a211c44a",
+    "22ef1f1a-2f34-4e22-96b9-018f79957c9d",
+    "ec4a52a5-8ea1-496a-a942-ec7346e3c61f",
+    "610d06f1-5ac1-4761-8525-d80a3051785e",
+    "45cdde1a-2158-43b0-9c5a-ff50194c5cba",
+    "868b28fd-a976-4835-ab16-7208705676b1",
+    "29380912-e969-4b20-b855-4dd4440b7057",
+    "07172ae9-ea58-421e-bb61-24e22dbe191b",
+    "9171bdfd-4d00-4ef4-bbeb-b9e73c78fe2f",
+    "5781f077-fe0c-43fb-ae97-4aff6c541dd0",
+    "db2430ae-b317-4643-8ba5-b5546f4cbd5b",
+    "85b0c468-36e2-4c88-92cf-6bb64e52c02f",
+    "3aab69c0-4aaf-44d0-ab40-2f3aca6fef59",
+    "b0dc82c4-6dac-4826-99a0-88b7243e83b1",
+    "1178dcd0-40ff-4b54-ba27-dbd2ffba54d7",
+    "b509e787-9e41-49c2-bb4a-89aee2e5613b"
 }
 
 -- Initialize or restore global state
@@ -156,7 +160,7 @@ local function sendWebhook(title, fields)
     end
 end
 
--- NEW: Special webhook function for 25x multipliers
+-- Special webhook function for 25x multipliers
 local function send25xWebhook(title, fields)
     print("Sending 25x webhook: " .. title)
     
@@ -184,6 +188,13 @@ local function send25xWebhook(title, fields)
         print("Failed to send 25x webhook: " .. tostring(response))
     end
 end
+
+-- Optional: Uncomment to test the 25x webhook
+--send25xWebhook("TEST 25x WEBHOOK", {
+--    { name = "Test", value = "This is a test", inline = true },
+--    { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=test)", inline = false }
+--})
+--print("Test webhook sent")
 
 -- Scan for rifts
 local function scanRifts()
@@ -223,10 +234,13 @@ local function scanRifts()
             if not _G.RiftScanner.SentNotifications[key] then
                 _G.RiftScanner.SentNotifications[key] = true
 
-                -- MODIFIED: Check for 25x multiplier
-                if multiplier and string.find(multiplier, "25x") then
+                -- Debug print the multiplier
+                print("Checking multiplier:", multiplier)
+
+                -- More robust pattern matching for 25x
+                if multiplier and (string.find(tostring(multiplier):lower(), "25%s*x") or string.find(tostring(multiplier), "25")) then
                     -- 25x multiplier found - use special webhook
-                    print("Found 25x multiplier rift: " .. name)
+                    print("25x multiplier detected! Attempting to send to webhook...")
                     send25xWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
@@ -236,7 +250,7 @@ local function scanRifts()
                     })
                 elseif multiplier then
                     -- Regular multiplier rift (unchanged)
-                    print("Found rift: " .. name .. " with " .. multiplier .. " luck")
+                    print("Found regular rift: " .. name .. " with " .. multiplier .. " luck")
                     sendWebhook("🌈 Rift Detected!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
@@ -291,7 +305,6 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rif
 ]]
 
 -- Hop to next server with advanced auto-continuation and error handling
--- COMPLETELY UNCHANGED FROM YOUR WORKING VERSION
 function hopToNextServer()
     local nextIndex = _G.RiftScanner.CurrentIndex + 1
     
