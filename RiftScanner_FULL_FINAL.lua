@@ -262,7 +262,9 @@ wait(5) -- Additional wait to ensure everything loads properly
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
--- Hop to next server with improved error handling
+-- In the hopToNextServer function, replace the teleport section with this:
+
+-- Hop to next server (SIMPLIFIED)
 function hopToNextServer()
     local nextIndex = _G.RiftScanner.CurrentIndex + 1
     
@@ -277,12 +279,9 @@ function hopToNextServer()
         local scriptToQueue = string.format(CONTINUATION_SCRIPT, nextIndex)
         
         -- Queue script to run after teleport
-        if getgenv().queue_on_teleport then
-            getgenv().queue_on_teleport(scriptToQueue)
-            print("Using AWP.GG queue_on_teleport")
-        elseif queue_on_teleport then
+        if queue_on_teleport then
             queue_on_teleport(scriptToQueue)
-            print("Using standard queue_on_teleport")
+            print("Using queue_on_teleport")
         elseif syn and syn.queue_on_teleport then
             syn.queue_on_teleport(scriptToQueue)
             print("Using Synapse queue_on_teleport")
@@ -291,44 +290,18 @@ function hopToNextServer()
         -- Wait for queue_on_teleport to register
         wait(1)
         
-        -- Set up a failsafe timer to move to the next server
-        spawn(function()
-            wait(15) -- Wait 15 seconds
-            
-            -- Check if we're still in the same server
-            local currentServer = game.JobId
-            if game.JobId == currentServer then
-                print("Teleport likely failed or showing error. Moving to next server...")
-                loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
-            end
-        end)
-        
-        -- Attempt teleport
-        print("Executing teleport...")
-        pcall(function()
+        -- Simple direct teleport
+        print("Teleporting to server " .. nextIndex)
+        local success = pcall(function()
             game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
         end)
         
-        -- If teleport call returns (didn't throw error), wait a moment and try next method
-        wait(3)
-        
-        -- Try alternative method if we're still here
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
-        end)
-        
-        -- Still here? Try one last method
-        wait(3)
-        if getgenv().teleport then
-            pcall(function()
-                getgenv().teleport(PLACE_ID, nextJobId)
-            end)
+        if not success then
+            print("Teleport failed, trying next server...")
+            wait(5)
+            _G.RiftScanner.CurrentIndex = nextIndex
+            hopToNextServer()
         end
-        
-        -- If we get here, all teleport methods returned without error
-        -- but we might still be showing an error dialog
-        print("All teleport methods attempted. Waiting for failsafe timer...")
-        
     else
         print("Finished scanning all servers in the list. Restarting from the beginning...")
         _G.RiftScanner.CurrentIndex = 0
