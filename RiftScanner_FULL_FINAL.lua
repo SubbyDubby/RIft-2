@@ -2,7 +2,7 @@
 
 -- Configuration
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y"
-local WEBHOOK_25X = "https://discord.com/api/webhooks/PUT-YOUR-25X-WEBHOOK-HERE"
+local WEBHOOK_25X = "https://discord.com/api/webhooks/1363451259016712192/OIMNA2MKvtfFW2IZOj5zDyoqhDYFlV-uU1GARyJwWSPSVHQzDAvSThojSOf1n9f5E6de"
 local PLACE_ID = 85896571713843
 
 local jobIds = {
