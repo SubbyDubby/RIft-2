@@ -1,142 +1,136 @@
 -- Fully Automatic AWP.GG Rift Scanner
-
--- Configuration
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y"
-local WEBHOOK_25X = "https://discord.com/api/webhooks/1363451259016712192/OIMNA2MKvtfFW2IZOj5zDyoqhDYFlV-uU1GARyJwWSPSVHQzDAvSThojSOf1n9f5E6de"
+-- Configuration (EDIT THESE)
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" 
+-- New webhook for 25x multiplier rifts
+local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" -- Replace with your special webhook for 25x rifts
 local PLACE_ID = 85896571713843
-
 local jobIds = {
-    "938bde92-e9ce-49d8-a670-754a19d644c0",
-    "586fb4bb-6004-4ac8-b16c-7ec03a6436c7",
     "d69ea861-d3e9-4389-bb3a-a15a1c507e81",
-    "4d371ef5-e88f-465d-82c4-02c4031c2965",
-    "bd27f9ad-b882-41a8-a821-36bc8a27f5ae",
-    "ae0ea311-9d14-4b51-a73a-ddb79fbed6a2",
-    "8e4cec64-5425-43c8-9bf1-e7bb97ceea03",
-    "d8a09f99-0786-4db2-bd08-d4c72b34a87a",
-    "de58e942-03d7-478d-b5ca-79753fe759ef",
-    "9def3f34-ba3d-41cf-89ff-dda3efa772c4",
-    "36a8660b-9099-4ae1-b4d5-04f93d8cbf85",
-    "178ffd2a-1759-46b0-aeb4-3fedf54bcb65",
-    "29534952-86aa-4c11-a0d4-c29307c83091",
-    "cc777f7f-f3c3-4c3a-bc07-a3eba897d635",
-    "34c4b94e-5fc2-44f1-a327-996126dcfe34",
-    "92be4c2a-1cc7-4939-b92b-7917f331f4ec",
-    "85c5bbf8-2cfa-4320-ab4e-09402d8f1e12",
-    "5cc97fb2-0c53-4dbd-90f3-db19d7526380",
-    "12e93878-464c-413c-87a0-4eba6ebc22e1",
-    "6a8a2019-318c-43cc-8a11-be570c0e2f58",
-    "dd9b48c5-c247-4368-94b0-61f65c889172",
-    "45a8e48c-4909-41f4-bb6f-f3cf4b85d6f1",
-    "76c68253-4cb0-42b8-86de-8216f5715346",
-    "3fb8c4a9-3958-432a-9714-ab31d057999a",
-    "f9e31c72-d1a6-4b43-8786-8e2ab073e0b7",
-    "39b9559c-ceac-488a-b0e4-12d2ec4c6a57",
-    "6dafeaeb-351f-4eaa-997a-071ca0847b00",
-    "fcf35300-4e24-4713-b976-0085e0079c62",
-    "427050a0-9717-477c-b169-f51ccd97de77",
-    "085b9599-ab49-4c94-b0b1-28f866044fda",
-    "5a09af3f-c9e8-41fb-a63b-55f6350af751",
-    "c51cbb61-e857-4e0e-98da-cae3707c0bad",
-    "bea338fb-0e03-49bf-842a-ec4447b0f3d0",
-    "bb36344a-76c7-42e7-9686-f08d4b189232",
-    "1199657d-5861-47e0-b2f1-da50d9bd5c1d",
-    "0ede8ae4-7554-4a11-a2f0-e520763b34b2",
-    "fefaddcb-91f7-42ce-a136-155be5210005",
-    "872ef65e-224c-4249-8fd3-0d9e34679f38",
-    "d38677f1-4986-45b7-8e1b-92cc06291a50",
+    "938bde92-e9ce-49d8-a670-754a19d644c0",
+    "d8794842-41ed-4fcc-9ee2-940efdaa8470",
     "a8d09c3e-0bfe-4f44-b450-503449a5db88",
-    "e8aba58d-a9ca-4ee9-a0d9-7e880695adfa",
-    "3c3379be-babb-435a-a9e5-a5c722b8a6dc",
-    "6958c399-52d9-4cfc-9aaa-5af0563bf619",
-    "2e211af6-9403-4350-b0f5-0fea91df47e6",
-    "ae4180e5-03f0-4f09-94b8-a92232a440de",
-    "70f8c86e-7071-4197-88ab-8d150b02ae6c",
-    "24590b99-6484-4f56-852b-4154d6e9669d",
+    "a1502835-3b22-4852-b9de-49e35e092f9d",
+    "d98d3868-b5af-4644-b799-d05ef6932fad",
+    "47eb275e-8f9a-47e0-803e-a25fdaf8c234",
+    "aa7ea7c2-fdab-4972-8964-2552a44aec57",
+    "f047b9a7-a0de-49f8-8ca9-9dd998dafb61",
+    "8cd17512-5895-4a4d-a6b7-5e3e61789d14",
+    "e395bdde-2d8b-4937-bc4b-34dfd95acbb1",
+    "b3f43f8a-131e-4e6c-a2ce-aafc97b6ae4f",
+    "5d30b454-ae0a-4cd1-99a7-c381ec74eed3",
+    "2736aab2-54ad-42ec-9799-043824ff47bf",
+    "0a04d9ad-c41d-467c-92dd-431067bd10ee",
+    "c5c0a716-f08d-4acf-861c-e1aa0e094b29",
+    "fe7bb08d-a457-4330-a52f-2a5f68e34abb",
+    "db783145-d050-460f-b4b2-5800d44ae81b",
+    "be9d7a63-430f-41ae-b39c-2932da13d513",
+    "95d15fe4-4804-406d-8a4b-d89d826e133a",
+    "ebc1d7ab-c655-4faf-902d-cb662cdd217a",
+    "6f03041f-6cc6-4798-b82a-6b1aa9b06f92",
+    "e20a0ce1-6c49-431c-8511-ee72b1b2a140",
+    "bff1817e-192a-42aa-815e-ec34888a564a",
+    "cf78a12d-7d1f-42cb-a99c-2fbf2d7f7a98",
+    "8d55eea0-6eb0-4f9f-a070-fc6fc546dc1c",
+    "dbf6c7a2-e6ac-489a-84af-64b692ff3705",
+    "511f2299-eaea-47d8-838e-b3e082bb96c0",
+    "b78da1c7-81ab-4f71-bedf-51eb4b9414f9",
+    "60b6cda7-967c-470d-b17c-c4482be490a8",
+    "c68731a2-8f64-4999-b92a-35b5806d5b5b",
+    "7a6390a6-7173-46fb-a6db-4da73adf80d9",
+    "2a99d903-ffa5-405b-bf35-28db82b3e747",
+    "f6d6d76d-b2b2-4b65-a681-45629bfecb1a",
+    "92be4c2a-1cc7-4939-b92b-7917f331f4ec",
+    "fe89d943-6a1e-43a7-a409-c697eccaeb5a",
+    "45a8e48c-4909-41f4-bb6f-f3cf4b85d6f1",
+    "7607482e-756f-47f3-a665-7cd9b3a6aff7",
+    "77f9a846-5eb1-41e4-bda0-52e9c8492d0b",
+    "4600d3b9-9854-4527-9d8e-edd148c9b0c2",
+    "518637e2-4a01-4758-ad5d-7ffd11b14653",
+    "931284d0-b24a-475c-accb-ffb4c8d1d1f5",
+    "47ac6200-4a66-42ce-84be-02c2db68fab0",
+    "09588e90-a275-427b-8ffe-4cbb1fa99892",
+    "64db9dee-428a-48cc-91dd-9c70733ebd16",
+    "fcf35300-4e24-4713-b976-0085e0079c62",
+    "b3c6c735-b8bf-4d57-8f50-ef15219e3b4f",
+    "92aec09e-d142-45c4-bb99-3b512e3a4588",
+    "d50fa5e1-18b8-48cc-9fbb-68641285d36a",
+    "c0778c9f-933a-4f7f-a5e5-4dddb83cd5fc",
+    "c5809de0-95c3-4227-bcf3-104a8350b4f1",
+    "c51cbb61-e857-4e0e-98da-cae3707c0bad",
+    "1a786e97-ef27-4711-9f5d-cccd74ec46d7",
+    "f5f77b30-6bb3-4d9e-a492-e7df6960664e",
+    "59d0a505-c1dd-4407-a41b-f94472783caf",
+    "1dd3829b-d13d-496c-8b2a-7b3e584889e7",
+    "fbaf51a1-6df2-42c0-8617-6f372dcc3308",
+    "a9879cd4-1ef1-4d38-9d89-b3b66ecf4a7a",
+    "e4c3b20a-0bd9-4f2e-8d9b-6a6135472e5b",
+    "e1d22614-62bf-4eec-a9bd-987794863b32",
+    "21559f14-8a4e-49d0-b162-482667d13f7e",
+    "0c214fdd-922b-4b7e-ba11-597acebc8eaa",
+    "360d3572-ab92-4e8b-93c5-076ebaf6c312",
+    "fc112d71-95bd-43b9-bec3-5a7d7847b529",
     "b604a000-9c77-4fc2-beeb-1246b08391f6",
-    "90063cf5-41e7-41ba-b184-cafe17593d07",
-    "0deb9daa-8b8c-4239-b417-c1318c1553b2",
-    "cd5892b0-b822-43b4-a2c7-c092be567373",
-    "acab5929-1864-4edf-95c8-7f2763d16019",
-    "1f039011-9f66-49b1-a7be-055827b5783d",
-    "c458eb90-1183-4b6f-9e6f-ab12d6d373b0",
-    "a36372f7-ab1a-454c-906a-d014b477f24f",
-    "c362b26b-fb92-4546-b540-d7b0ee7fb720",
-    "174672ec-f3fa-4890-9339-e2c4d3dadae8",
-    "ff319087-6b16-4423-8fa1-03602039bee0",
-    "03731fbe-6cca-4be1-b542-d7c1842d423f",
-    "f9fef9db-7ac4-4282-af94-f5901088ed91",
-    "315bd567-23f2-4dac-afc1-c3f99ccc89af",
-    "614f7906-bdef-4cdb-95ef-f888a070d551",
-    "ace15a42-8bbe-413b-bd84-61bdd2ec3d18",
-    "1e96676e-4e50-4779-a57e-7a2e4a9403f9",
-    "3372bff4-b1d6-497a-9a00-9aa57ce94bf3",
-    "d40222b5-dd85-4f8e-8c46-a77988e4315b",
-    "c83df413-ac46-4f14-b1b3-f34403ee2a37",
-    "eb56f151-c687-4aa0-8b2c-4b87d9b5dd04",
-    "00f5d20e-ab6e-451c-8ad8-a78b5e4552ba",
+    "e91eda21-d132-46cd-93e0-85490901dcc8",
+    "aee1152c-cae1-41bf-88a4-9c20b35584b8",
+    "83e840e1-b85d-409a-80dc-20ede671a466",
+    "62d6d55c-ee1a-4cd6-a6ec-b88f9e50d034",
+    "3b30c9c9-420a-4a02-8fcd-a15761b0ab48",
     "7d91afd8-3557-4c89-b93e-9fa93bb1eb47",
-    "cb917682-d693-4276-85a6-76f01edc5cd6",
-    "0a5a9a2f-8edf-496e-88ec-f53e7e4ec67f",
-    "e71aa26c-0440-440f-9f3d-ba819275c913",
-    "192695f9-d9c9-4142-a935-50b99ab0a192",
-    "d8ce8acb-286d-4f1d-ac01-59bb4798c865",
-    "2f7251ad-b96b-4856-9e47-9c6a35b39160",
-    "d090b9a2-3bde-411b-852c-acc504b4d327",
-    "f37889ec-e205-49c3-b7e6-47a6b56f19bf",
-    "5014e425-9e55-4620-b1c9-1c7d57fd78bc",
-    "9ec76e7a-18f5-41a8-9e1e-a31bc0ff9516",
-    "d5109cf7-91de-40b2-acde-863406827cca",
-    "c090838d-4aa7-4681-b583-15048818566c",
-    "794e6cbb-35ca-4daa-a0d2-4809fdf5722e",
-    "368c86ea-f399-4f86-add6-f8787f1e308f",
-    "d8bcfb66-d626-4968-a477-09a0835f1120",
-    "48ba812d-d87b-4df4-981c-fa16f2481187",
-    "15042873-5c2f-41fb-93c7-e536fed4c64a",
-    "e80a0935-6dc9-4cc2-8963-dc9516c96c40",
-    "d964858f-4214-4ec0-8bd0-f2c3e0744db6",
-    "e3c241b8-616d-4cc1-86a0-17c46ccf36ba",
-    "af543e47-d547-4240-87a5-2fb1dc5b3d2a",
-    "18aebc86-000c-4da5-be24-9dae35624852",
-    "b4b8c5b4-16ad-489c-bcee-a5539e7e0228",
-    "b47c2af0-446a-4da1-a07a-809b898d99b7",
-    "0df555c1-aaa1-4a51-853e-2a7c029058f4",
-    "c27083c1-fe3c-4365-8e76-942c5b4d1b2b",
-    "7c97c269-df57-433d-9614-982d7e477773",
-    "bf750e48-395d-48af-b9fe-0fb58f33c83c",
-    "17a05cb5-2404-4f51-8da7-d3a101d3c0dc",
-    "7ea92a5d-79cd-4172-a3fa-306c3957197e"
+    "d055c74d-a4de-4afa-bbd9-5f7b28559ce4",
+    "ae64d7c9-b0e8-42e4-a643-8fd03d0b83ad",
+    "8f54fdf6-cb83-4288-9d73-70394c960b51",
+    "533f9124-3377-44bd-aa9c-2697b3760ae8",
+    "ba1b905f-020e-4561-829c-508bcf61ff36",
+    "f809feb6-b5c5-4796-aecd-5ad96d771083",
+    "589d3d56-cd97-44f4-b518-953069ebc317",
+    "3de35df2-4d19-46c0-9930-93bc6519f247",
+    "d3fbf716-02fc-4f01-a6d1-68870c048026",
+    "6c0b9571-0e85-4c8a-9377-2f16c59d18ca",
+    "11163f80-51de-488a-8938-1785eaf49db7",
+    "fb10df28-30e1-499a-837d-fccf31fb3bd5",
+    "58167a5d-0345-4901-8a95-97fd9af7aee5",
+    "e0c50f02-2eb4-4036-bce2-6682c2d74a5b",
+    "661d54a8-bce8-4a92-9477-aed7cf96279d",
+    "e83de9d7-34e1-4ea7-a7e2-383617b51bd0",
+    "e9a4d062-873d-421b-a445-0c0b07e5ccb7",
+    "94cc2de1-c54e-4c52-99dc-5cae42a09798",
+    "fa097135-64ba-48c7-9cb8-fddc789d24f8",
+    "4bc99a98-4056-405c-8de4-4261f402eea0",
+    "c64b0456-4d0a-43cb-a39f-22473f9aba39",
+    "0a5a1bb5-da81-4157-9b34-427ca93927ca",
+    "52682413-fcd7-455e-b710-ff16941e7281",
+    "35cac887-cc04-4af7-acbd-c00d30962226",
+    "c2b2dcb8-5086-40ef-a387-ccb67fd3ffb8",
+    "ee5387e4-937b-43d7-9872-64f802c742dc",
+    "cc8fe4b1-08c0-446b-9d67-c887dda8bdb5",
+    "0eef22bd-09ab-45f7-9aa7-0a38fcdf3954",
+    "f174d91c-8c38-4da0-a37d-9d583f199f6d"
 }
 
+-- Initialize or restore global state
 _G.RiftScanner = _G.RiftScanner or {
     CurrentIndex = 1,
     SentNotifications = {}
 }
 
+-- Services
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
+-- Get the appropriate request function
 local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or getgenv().request
 if not request then
     print("ERROR: No HTTP request function found!")
     return
 end
 
-local function sendWebhook(title, fields)
+-- Send webhook function with support for different webhook URLs
+local function sendWebhook(title, fields, useSpecialWebhook)
     print("Sending webhook: " .. title)
-
-    -- Detect if this is a 25x multiplier *before* doing anything
-    local is25x = false
-    for _, f in ipairs(fields) do
-        if f.name:lower() == "multiplier" and f.value:lower():find("25x") then
-            is25x = true
-            break
-        end
-    end
-
+    
     local embed = {
         title = title,
         fields = fields,
@@ -145,68 +139,44 @@ local function sendWebhook(title, fields)
     }
 
     local payload = HttpService:JSONEncode({ embeds = { embed } })
+    
+    -- Choose which webhook URL to use
+    local webhookUrl = WEBHOOK_URL
+    if useSpecialWebhook then
+        webhookUrl = WEBHOOK_URL_25X
+        print("Using special webhook for 25x multiplier!")
+    end
 
-    -- Always send to the main webhook
     local success, response = pcall(function()
         return request({
-            Url = WEBHOOK_URL,
+            Url = webhookUrl,
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
             Body = payload
         })
     end)
-
+    
     if success then
         print("Webhook sent successfully!")
     else
         print("Failed to send webhook: " .. tostring(response))
     end
-
-    -- If it's a 25x, also send to second webhook
-    if is25x and WEBHOOK_25X and WEBHOOK_25X ~= "" then
-        print("🎯 Sending 25x Rift to secondary webhook")
-
-        -- Add join link field just for the 25x payload
-        table.insert(fields, {
-            name = "🔗 Join Server",
-            value = string.format("[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=%s&jobId=%s)", PLACE_ID, game.JobId),
-            inline = false
-        })
-
-        local payload25x = HttpService:JSONEncode({
-            embeds = {
-                {
-                    title = title,
-                    fields = fields,
-                    color = 10597128,
-                    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ")
-                }
-            }
-        })
-
-        pcall(function()
-            request({
-                Url = WEBHOOK_25X,
-                Method = "POST",
-                Headers = { ["Content-Type"] = "application/json" },
-                Body = payload25x
-            })
-        end)
-    end
 end
 
-
+-- Scan for rifts
 local function scanRifts()
     print("Scanning for rifts...")
     local foundRift = false
     local currentSeen = {}
 
+    -- Look for the rifts folder
     local riftFolder = Workspace:FindFirstChild("Rendered") and Workspace.Rendered:FindFirstChild("Rifts")
-    if not riftFolder then
+    if not riftFolder then 
         print("Rifts folder not found")
     else
         print("Rifts folder found, checking for rifts...")
-
+        
+        -- Loop through all rifts
         for _, rift in pairs(riftFolder:GetChildren()) do
             if not rift:IsA("Model") then continue end
 
@@ -222,6 +192,7 @@ local function scanRifts()
 
             if not timer or timer == "" then continue end
 
+            -- Y Position for height
             local y = rift:GetPivot().Position.Y
             local key = name .. "|" .. timer .. "|" .. (multiplier or "n/a") .. "|" .. y
             currentSeen[key] = true
@@ -230,27 +201,42 @@ local function scanRifts()
             if not _G.RiftScanner.SentNotifications[key] then
                 _G.RiftScanner.SentNotifications[key] = true
 
-                if multiplier then
-                    print("Found rift: " .. name .. " with " .. multiplier .. " luck")
+                -- Check if this is a 25x multiplier rift
+                local is25xMultiplier = false
+                if multiplier and multiplier:find("25x") then
+                    is25xMultiplier = true
+                    print("Found 25x multiplier rift: " .. name)
+                    
+                    -- For 25x rifts, create fields with a clickable join link
+                    sendWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
+                        { name = "Egg", value = name, inline = true },
+                        { name = "Multiplier", value = multiplier, inline = true },
+                        { name = "Time Left", value = timer, inline = true },
+                        { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
+                        { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
+                    }, true) -- Use special webhook
+                elseif multiplier then
+                    -- Normal rift with multiplier
                     sendWebhook("🌈 Rift Detected!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    })
+                    }, false) -- Standard webhook
                 else
-                    print("Found chest: " .. name)
+                    -- Chest rift (no multiplier)
                     sendWebhook("🎁 Chest Detected!", {
                         { name = "Chest", value = name, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    })
+                    }, false) -- Standard webhook
                 end
             end
         end
 
+        -- Clear despawned entries
         for key in pairs(_G.RiftScanner.SentNotifications) do
             if not currentSeen[key] then
                 _G.RiftScanner.SentNotifications[key] = nil
@@ -261,82 +247,121 @@ local function scanRifts()
     if not foundRift then
         print("No rifts found in this server")
     end
-
+    
+    -- After scanning, wait 15 seconds before hopping
     print("Waiting 15 seconds before moving to next server...")
     wait(15)
     hopToNextServer()
 end
 
+-- Auto-continuation script for the next server
 local CONTINUATION_SCRIPT = [[
+-- Initialize global variables
 _G.RiftScanner = _G.RiftScanner or {}
 _G.RiftScanner.CurrentIndex = %d
 _G.RiftScanner.SentNotifications = {}
+
+-- Wait for game to load
 if not game:IsLoaded() then game.Loaded:Wait() end
-wait(5)
+wait(5) -- Additional wait to ensure everything loads properly
+
+-- Load and execute main script
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
+-- Hop to next server with improved error handling
 function hopToNextServer()
     local nextIndex = _G.RiftScanner.CurrentIndex + 1
+    
     if nextIndex <= #jobIds then
         local nextJobId = jobIds[nextIndex]
         print("Hopping to server " .. nextIndex .. " with JobID: " .. nextJobId)
+        
+        -- Update the current index immediately
         _G.RiftScanner.CurrentIndex = nextIndex
+        
+        -- Create continuation script
         local scriptToQueue = string.format(CONTINUATION_SCRIPT, nextIndex)
-
+        
+        -- Queue script to run after teleport
         if getgenv().queue_on_teleport then
             getgenv().queue_on_teleport(scriptToQueue)
+            print("Using AWP.GG queue_on_teleport")
         elseif queue_on_teleport then
             queue_on_teleport(scriptToQueue)
+            print("Using standard queue_on_teleport")
         elseif syn and syn.queue_on_teleport then
             syn.queue_on_teleport(scriptToQueue)
+            print("Using Synapse queue_on_teleport")
         end
-
+        
+        -- Wait for queue_on_teleport to register
         wait(1)
-
+        
+        -- Set up a failsafe timer to move to the next server
         spawn(function()
-            wait(15)
-            if game.JobId == game.JobId then
-                print("Teleport likely failed, retrying...")
+            wait(15) -- Wait 15 seconds
+            
+            -- Check if we're still in the same server
+            local currentServer = game.JobId
+            if game.JobId == currentServer then
+                print("Teleport likely failed or showing error. Moving to next server...")
                 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
             end
         end)
-
+        
+        -- Attempt teleport
+        print("Executing teleport...")
         pcall(function()
-            TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
+            game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
         end)
-
+        
+        -- If teleport call returns (didn't throw error), wait a moment and try next method
         wait(3)
+        
+        -- Try alternative method if we're still here
         pcall(function()
             TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
         end)
-
+        
+        -- Still here? Try one last method
         wait(3)
         if getgenv().teleport then
             pcall(function()
                 getgenv().teleport(PLACE_ID, nextJobId)
             end)
         end
+        
+        -- If we get here, all teleport methods returned without error
+        -- but we might still be showing an error dialog
+        print("All teleport methods attempted. Waiting for failsafe timer...")
+        
     else
-        print("Finished scanning all servers. Restarting.")
+        print("Finished scanning all servers in the list. Restarting from the beginning...")
         _G.RiftScanner.CurrentIndex = 0
         hopToNextServer()
     end
 end
 
+-- Main execution starts here
 print("Rift Scanner started")
 print("Current server index: " .. _G.RiftScanner.CurrentIndex)
 
+-- Wait for game to load completely
 if not game:IsLoaded() then
     print("Waiting for game to load...")
     game.Loaded:Wait()
 end
 
+-- Wait for player character to load
 if not LocalPlayer.Character then
     print("Waiting for character to load...")
     LocalPlayer.CharacterAdded:Wait()
 end
 
+-- Wait a bit for everything to initialize
 print("Waiting 10 seconds before starting scan...")
 wait(10)
+
+-- Start scanning
 scanRifts()
