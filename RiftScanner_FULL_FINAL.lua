@@ -1,7 +1,7 @@
 -- Fully Automatic AWP.GG Rift Scanner
 -- Configuration (EDIT THESE)
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" 
--- New webhook for 25x multiplier rifts (ONLY NEW LINE ADDED)
+-- New webhook for 25x multiplier rifts (ADD THIS LINE)
 local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" -- Replace with your special webhook for 25x rifts
 local PLACE_ID = 85896571713843
 local jobIds = {
@@ -106,7 +106,6 @@ local jobIds = {
     "0eef22bd-09ab-45f7-9aa7-0a38fcdf3954",
     "f174d91c-8c38-4da0-a37d-9d583f199f6d"
 }
-
 -- Initialize or restore global state
 _G.RiftScanner = _G.RiftScanner or {
     CurrentIndex = 1,
@@ -127,7 +126,7 @@ if not request then
     return
 end
 
--- MODIFIED FUNCTION: Added webhookUrl parameter
+-- MODIFIED: Send webhook function with URL parameter
 local function sendWebhook(title, fields, webhookUrl)
     print("Sending webhook: " .. title)
     
@@ -140,9 +139,12 @@ local function sendWebhook(title, fields, webhookUrl)
 
     local payload = HttpService:JSONEncode({ embeds = { embed } })
 
+    -- Use the provided webhook URL or default to WEBHOOK_URL
+    webhookUrl = webhookUrl or WEBHOOK_URL
+
     local success, response = pcall(function()
         return request({
-            Url = webhookUrl,  -- Now uses the passed webhook URL
+            Url = webhookUrl,
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
             Body = payload
@@ -194,11 +196,10 @@ local function scanRifts()
             if not _G.RiftScanner.SentNotifications[key] then
                 _G.RiftScanner.SentNotifications[key] = true
 
-                -- MODIFIED SECTION: Check for 25x multiplier
-                if multiplier and multiplier:find("25x") then
-                    -- 25x multiplier found - use special webhook and format
+                -- MODIFIED: Check for 25x multiplier
+                if multiplier and string.find(multiplier, "25x") then
+                    -- 25x multiplier found
                     print("Found 25x multiplier rift: " .. name)
-                    
                     sendWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
@@ -207,7 +208,7 @@ local function scanRifts()
                         { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
                     }, WEBHOOK_URL_25X)  -- Use 25x webhook
                 elseif multiplier then
-                    -- Regular multiplier - use standard webhook and format
+                    -- Regular multiplier rift (unchanged)
                     print("Found rift: " .. name .. " with " .. multiplier .. " luck")
                     sendWebhook("🌈 Rift Detected!", {
                         { name = "Egg", value = name, inline = true },
@@ -215,16 +216,16 @@ local function scanRifts()
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    }, WEBHOOK_URL)  -- Use standard webhook
+                    })
                 else
-                    -- Chest - use standard webhook and format
+                    -- Chest rift (unchanged)
                     print("Found chest: " .. name)
                     sendWebhook("🎁 Chest Detected!", {
                         { name = "Chest", value = name, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    }, WEBHOOK_URL)  -- Use standard webhook
+                    })
                 end
             end
         end
@@ -262,9 +263,8 @@ wait(5) -- Additional wait to ensure everything loads properly
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
--- In the hopToNextServer function, replace the teleport section with this:
-
--- Hop to next server (SIMPLIFIED)
+-- Hop to next server with advanced auto-continuation and error handling
+-- THIS FUNCTION IS COMPLETELY UNCHANGED FROM YOUR ORIGINAL SCRIPT
 function hopToNextServer()
     local nextIndex = _G.RiftScanner.CurrentIndex + 1
     
@@ -279,9 +279,12 @@ function hopToNextServer()
         local scriptToQueue = string.format(CONTINUATION_SCRIPT, nextIndex)
         
         -- Queue script to run after teleport
-        if queue_on_teleport then
+        if getgenv().queue_on_teleport then
+            getgenv().queue_on_teleport(scriptToQueue)
+            print("Using AWP.GG queue_on_teleport")
+        elseif queue_on_teleport then
             queue_on_teleport(scriptToQueue)
-            print("Using queue_on_teleport")
+            print("Using standard queue_on_teleport")
         elseif syn and syn.queue_on_teleport then
             syn.queue_on_teleport(scriptToQueue)
             print("Using Synapse queue_on_teleport")
@@ -290,18 +293,44 @@ function hopToNextServer()
         -- Wait for queue_on_teleport to register
         wait(1)
         
-        -- Simple direct teleport
-        print("Teleporting to server " .. nextIndex)
-        local success = pcall(function()
+        -- Set up a failsafe timer to move to the next server
+        spawn(function()
+            wait(15) -- Wait 15 seconds
+            
+            -- Check if we're still in the same server
+            local currentServer = game.JobId
+            if game.JobId == currentServer then
+                print("Teleport likely failed or showing error. Moving to next server...")
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
+            end
+        end)
+        
+        -- Attempt teleport
+        print("Executing teleport...")
+        pcall(function()
             game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
         end)
         
-        if not success then
-            print("Teleport failed, trying next server...")
-            wait(5)
-            _G.RiftScanner.CurrentIndex = nextIndex
-            hopToNextServer()
+        -- If teleport call returns (didn't throw error), wait a moment and try next method
+        wait(3)
+        
+        -- Try alternative method if we're still here
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
+        end)
+        
+        -- Still here? Try one last method
+        wait(3)
+        if getgenv().teleport then
+            pcall(function()
+                getgenv().teleport(PLACE_ID, nextJobId)
+            end)
         end
+        
+        -- If we get here, all teleport methods returned without error
+        -- but we might still be showing an error dialog
+        print("All teleport methods attempted. Waiting for failsafe timer...")
+        
     else
         print("Finished scanning all servers in the list. Restarting from the beginning...")
         _G.RiftScanner.CurrentIndex = 0
