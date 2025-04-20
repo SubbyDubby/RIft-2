@@ -1,7 +1,7 @@
 -- Fully Automatic AWP.GG Rift Scanner
 -- Configuration (EDIT THESE)
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" 
--- New webhook for 25x multiplier rifts
+-- New webhook for 25x multiplier rifts (ONLY NEW LINE ADDED)
 local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" -- Replace with your special webhook for 25x rifts
 local PLACE_ID = 85896571713843
 local jobIds = {
@@ -127,8 +127,8 @@ if not request then
     return
 end
 
--- Send webhook function with support for different webhook URLs
-local function sendWebhook(title, fields, useSpecialWebhook)
+-- MODIFIED FUNCTION: Added webhookUrl parameter
+local function sendWebhook(title, fields, webhookUrl)
     print("Sending webhook: " .. title)
     
     local embed = {
@@ -139,17 +139,10 @@ local function sendWebhook(title, fields, useSpecialWebhook)
     }
 
     local payload = HttpService:JSONEncode({ embeds = { embed } })
-    
-    -- Choose which webhook URL to use
-    local webhookUrl = WEBHOOK_URL
-    if useSpecialWebhook then
-        webhookUrl = WEBHOOK_URL_25X
-        print("Using special webhook for 25x multiplier!")
-    end
 
     local success, response = pcall(function()
         return request({
-            Url = webhookUrl,
+            Url = webhookUrl,  -- Now uses the passed webhook URL
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
             Body = payload
@@ -201,37 +194,37 @@ local function scanRifts()
             if not _G.RiftScanner.SentNotifications[key] then
                 _G.RiftScanner.SentNotifications[key] = true
 
-                -- Check if this is a 25x multiplier rift
-                local is25xMultiplier = false
+                -- MODIFIED SECTION: Check for 25x multiplier
                 if multiplier and multiplier:find("25x") then
-                    is25xMultiplier = true
+                    -- 25x multiplier found - use special webhook and format
                     print("Found 25x multiplier rift: " .. name)
                     
-                    -- For 25x rifts, create fields with a clickable join link
                     sendWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
-                    }, true) -- Use special webhook
+                    }, WEBHOOK_URL_25X)  -- Use 25x webhook
                 elseif multiplier then
-                    -- Normal rift with multiplier
+                    -- Regular multiplier - use standard webhook and format
+                    print("Found rift: " .. name .. " with " .. multiplier .. " luck")
                     sendWebhook("🌈 Rift Detected!", {
                         { name = "Egg", value = name, inline = true },
                         { name = "Multiplier", value = multiplier, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    }, false) -- Standard webhook
+                    }, WEBHOOK_URL)  -- Use standard webhook
                 else
-                    -- Chest rift (no multiplier)
+                    -- Chest - use standard webhook and format
+                    print("Found chest: " .. name)
                     sendWebhook("🎁 Chest Detected!", {
                         { name = "Chest", value = name, inline = true },
                         { name = "Time Left", value = timer, inline = true },
                         { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
                         { name = "Server ID", value = game.JobId, inline = false }
-                    }, false) -- Standard webhook
+                    }, WEBHOOK_URL)  -- Use standard webhook
                 end
             end
         end
