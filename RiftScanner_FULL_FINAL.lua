@@ -128,6 +128,15 @@ end
 local function sendWebhook(title, fields)
     print("Sending webhook: " .. title)
 
+    -- Detect if this is a 25x multiplier *before* doing anything
+    local is25x = false
+    for _, f in ipairs(fields) do
+        if f.name:lower() == "multiplier" and f.value:lower():find("25x") then
+            is25x = true
+            break
+        end
+    end
+
     local embed = {
         title = title,
         fields = fields,
@@ -137,6 +146,7 @@ local function sendWebhook(title, fields)
 
     local payload = HttpService:JSONEncode({ embeds = { embed } })
 
+    -- Always send to the main webhook
     local success, response = pcall(function()
         return request({
             Url = WEBHOOK_URL,
@@ -152,18 +162,11 @@ local function sendWebhook(title, fields)
         print("Failed to send webhook: " .. tostring(response))
     end
 
-    -- 25x extra webhook post
-    local multiplier = ""
-    for _, f in ipairs(fields) do
-        if f.name:lower() == "multiplier" then
-            multiplier = f.value:lower()
-        end
-    end
-
-    if multiplier == "25x" and WEBHOOK_25X and WEBHOOK_25X ~= "" then
+    -- If it's a 25x, also send to second webhook
+    if is25x and WEBHOOK_25X and WEBHOOK_25X ~= "" then
         print("🎯 Sending 25x Rift to secondary webhook")
 
-        -- Add join link to 25x webhook
+        -- Add join link field just for the 25x payload
         table.insert(fields, {
             name = "🔗 Join Server",
             value = string.format("[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=%s&jobId=%s)", PLACE_ID, game.JobId),
@@ -191,6 +194,7 @@ local function sendWebhook(title, fields)
         end)
     end
 end
+
 
 local function scanRifts()
     print("Scanning for rifts...")
