@@ -1,111 +1,111 @@
 -- Fully Automatic AWP.GG Rift Scanner
 -- Configuration (EDIT THESE)
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" 
--- New webhook for 25x multiplier rifts (ADD THIS LINE)
-local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" -- Replace with your special webhook for 25x rifts
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2Tvrl_QuigIZ5AJswcd1hYKPGxIHlYzUUu-cicdhF6kj2i5hrQi16-YK2-R7rk0Y" -- Replace with your actual webhook
+local PLACE_ID = 85896571713843
 local PLACE_ID = 85896571713843
 local jobIds = {
-    "d69ea861-d3e9-4389-bb3a-a15a1c507e81",
-    "938bde92-e9ce-49d8-a670-754a19d644c0",
-    "d8794842-41ed-4fcc-9ee2-940efdaa8470",
-    "a8d09c3e-0bfe-4f44-b450-503449a5db88",
-    "a1502835-3b22-4852-b9de-49e35e092f9d",
-    "d98d3868-b5af-4644-b799-d05ef6932fad",
-    "47eb275e-8f9a-47e0-803e-a25fdaf8c234",
-    "aa7ea7c2-fdab-4972-8964-2552a44aec57",
-    "f047b9a7-a0de-49f8-8ca9-9dd998dafb61",
-    "8cd17512-5895-4a4d-a6b7-5e3e61789d14",
-    "e395bdde-2d8b-4937-bc4b-34dfd95acbb1",
-    "b3f43f8a-131e-4e6c-a2ce-aafc97b6ae4f",
-    "5d30b454-ae0a-4cd1-99a7-c381ec74eed3",
-    "2736aab2-54ad-42ec-9799-043824ff47bf",
-    "0a04d9ad-c41d-467c-92dd-431067bd10ee",
-    "c5c0a716-f08d-4acf-861c-e1aa0e094b29",
-    "fe7bb08d-a457-4330-a52f-2a5f68e34abb",
-    "db783145-d050-460f-b4b2-5800d44ae81b",
-    "be9d7a63-430f-41ae-b39c-2932da13d513",
-    "95d15fe4-4804-406d-8a4b-d89d826e133a",
-    "ebc1d7ab-c655-4faf-902d-cb662cdd217a",
-    "6f03041f-6cc6-4798-b82a-6b1aa9b06f92",
-    "e20a0ce1-6c49-431c-8511-ee72b1b2a140",
-    "bff1817e-192a-42aa-815e-ec34888a564a",
-    "cf78a12d-7d1f-42cb-a99c-2fbf2d7f7a98",
-    "8d55eea0-6eb0-4f9f-a070-fc6fc546dc1c",
-    "dbf6c7a2-e6ac-489a-84af-64b692ff3705",
-    "511f2299-eaea-47d8-838e-b3e082bb96c0",
-    "b78da1c7-81ab-4f71-bedf-51eb4b9414f9",
-    "60b6cda7-967c-470d-b17c-c4482be490a8",
-    "c68731a2-8f64-4999-b92a-35b5806d5b5b",
-    "7a6390a6-7173-46fb-a6db-4da73adf80d9",
-    "2a99d903-ffa5-405b-bf35-28db82b3e747",
-    "f6d6d76d-b2b2-4b65-a681-45629bfecb1a",
-    "92be4c2a-1cc7-4939-b92b-7917f331f4ec",
-    "fe89d943-6a1e-43a7-a409-c697eccaeb5a",
-    "45a8e48c-4909-41f4-bb6f-f3cf4b85d6f1",
-    "7607482e-756f-47f3-a665-7cd9b3a6aff7",
-    "77f9a846-5eb1-41e4-bda0-52e9c8492d0b",
-    "4600d3b9-9854-4527-9d8e-edd148c9b0c2",
-    "518637e2-4a01-4758-ad5d-7ffd11b14653",
-    "931284d0-b24a-475c-accb-ffb4c8d1d1f5",
-    "47ac6200-4a66-42ce-84be-02c2db68fab0",
-    "09588e90-a275-427b-8ffe-4cbb1fa99892",
-    "64db9dee-428a-48cc-91dd-9c70733ebd16",
-    "fcf35300-4e24-4713-b976-0085e0079c62",
-    "b3c6c735-b8bf-4d57-8f50-ef15219e3b4f",
-    "92aec09e-d142-45c4-bb99-3b512e3a4588",
-    "d50fa5e1-18b8-48cc-9fbb-68641285d36a",
-    "c0778c9f-933a-4f7f-a5e5-4dddb83cd5fc",
-    "c5809de0-95c3-4227-bcf3-104a8350b4f1",
-    "c51cbb61-e857-4e0e-98da-cae3707c0bad",
-    "1a786e97-ef27-4711-9f5d-cccd74ec46d7",
-    "f5f77b30-6bb3-4d9e-a492-e7df6960664e",
-    "59d0a505-c1dd-4407-a41b-f94472783caf",
-    "1dd3829b-d13d-496c-8b2a-7b3e584889e7",
-    "fbaf51a1-6df2-42c0-8617-6f372dcc3308",
-    "a9879cd4-1ef1-4d38-9d89-b3b66ecf4a7a",
-    "e4c3b20a-0bd9-4f2e-8d9b-6a6135472e5b",
-    "e1d22614-62bf-4eec-a9bd-987794863b32",
-    "21559f14-8a4e-49d0-b162-482667d13f7e",
-    "0c214fdd-922b-4b7e-ba11-597acebc8eaa",
-    "360d3572-ab92-4e8b-93c5-076ebaf6c312",
-    "fc112d71-95bd-43b9-bec3-5a7d7847b529",
-    "b604a000-9c77-4fc2-beeb-1246b08391f6",
-    "e91eda21-d132-46cd-93e0-85490901dcc8",
-    "aee1152c-cae1-41bf-88a4-9c20b35584b8",
-    "83e840e1-b85d-409a-80dc-20ede671a466",
-    "62d6d55c-ee1a-4cd6-a6ec-b88f9e50d034",
-    "3b30c9c9-420a-4a02-8fcd-a15761b0ab48",
-    "7d91afd8-3557-4c89-b93e-9fa93bb1eb47",
-    "d055c74d-a4de-4afa-bbd9-5f7b28559ce4",
-    "ae64d7c9-b0e8-42e4-a643-8fd03d0b83ad",
-    "8f54fdf6-cb83-4288-9d73-70394c960b51",
-    "533f9124-3377-44bd-aa9c-2697b3760ae8",
-    "ba1b905f-020e-4561-829c-508bcf61ff36",
-    "f809feb6-b5c5-4796-aecd-5ad96d771083",
-    "589d3d56-cd97-44f4-b518-953069ebc317",
-    "3de35df2-4d19-46c0-9930-93bc6519f247",
-    "d3fbf716-02fc-4f01-a6d1-68870c048026",
-    "6c0b9571-0e85-4c8a-9377-2f16c59d18ca",
-    "11163f80-51de-488a-8938-1785eaf49db7",
-    "fb10df28-30e1-499a-837d-fccf31fb3bd5",
-    "58167a5d-0345-4901-8a95-97fd9af7aee5",
-    "e0c50f02-2eb4-4036-bce2-6682c2d74a5b",
-    "661d54a8-bce8-4a92-9477-aed7cf96279d",
-    "e83de9d7-34e1-4ea7-a7e2-383617b51bd0",
-    "e9a4d062-873d-421b-a445-0c0b07e5ccb7",
-    "94cc2de1-c54e-4c52-99dc-5cae42a09798",
-    "fa097135-64ba-48c7-9cb8-fddc789d24f8",
-    "4bc99a98-4056-405c-8de4-4261f402eea0",
-    "c64b0456-4d0a-43cb-a39f-22473f9aba39",
-    "0a5a1bb5-da81-4157-9b34-427ca93927ca",
-    "52682413-fcd7-455e-b710-ff16941e7281",
-    "35cac887-cc04-4af7-acbd-c00d30962226",
-    "c2b2dcb8-5086-40ef-a387-ccb67fd3ffb8",
-    "ee5387e4-937b-43d7-9872-64f802c742dc",
-    "cc8fe4b1-08c0-446b-9d67-c887dda8bdb5",
-    "0eef22bd-09ab-45f7-9aa7-0a38fcdf3954",
-    "f174d91c-8c38-4da0-a37d-9d583f199f6d"
+    "caf64c7b-3514-4481-8054-2a8986b14986",
+    "239f7147-5147-4356-a64d-94db4c437fda",
+    "e100ab0a-5154-4ed6-9321-b43446083358",
+    "02e929b2-7ed7-45db-9a35-a9c3caeac426",
+    "ab47a03d-0a60-4759-9c76-3bfad3c301d2",
+    "4c26270d-5493-49e8-bacb-bef42ad133ac",
+    "e838b14d-5411-4a43-a306-d018b413e7d0",
+    "9ea622a4-2648-4761-9f85-093e9ecc01c4",
+    "a3ed1dcf-b56e-4989-a765-0c156bb081ed",
+    "39e4e265-0548-4bfa-9574-2409335ed881",
+    "4cc2a3a3-1ab9-44c8-a0b7-ca2842a8e978",
+    "b6cdafe2-0b7c-484e-bc5a-aa4e742283bd",
+    "48850f3e-6034-464e-afe5-990e8027dc19",
+    "90e2a5ab-ad13-4312-a374-e9006e639ddb",
+    "6de54149-95b5-429c-bd6d-78a8c61b194b",
+    "ea6355d2-e64b-4610-9b51-3c97ab947f51",
+    "0b97d697-572b-42dd-99c3-1a53766a2648",
+    "00a39509-d0ac-4df3-b238-6a66fa1dbec5",
+    "9490743f-7786-44b2-a64d-ecc281313135",
+    "b1c7ae58-93e8-4802-9bdf-a9aa9c02d39b",
+    "c9e47af7-083b-498e-a6df-3329179af9f0",
+    "55b1c43a-5894-4361-907e-373ae0973d30",
+    "31ddb552-ae53-4f6d-8cd4-d6d38a93809d",
+    "5ad70d20-83af-424a-a8c6-97891995233b",
+    "5d1607ea-c6ec-4a67-a437-8b8a0713d452",
+    "9aaf0a81-30cf-42ac-925c-a296ecb37daa",
+    "f27b6ccb-7121-4975-a0e4-37d7cf41cbbc",
+    "74dfd692-7364-4289-9f30-48652ed2df4d",
+    "ff4ca6fa-91c6-4a39-b58b-df8786cb518a",
+    "06d1a44b-2a4b-4efd-86e5-1039f519f91f",
+    "42b024fd-e463-4f9c-900a-1532049898ec",
+    "5b44b33a-bdbe-4ad1-88d6-6b80c67350a9",
+    "520a475b-8954-48dc-8911-7ed1cbcaf199",
+    "1d31cb5f-4400-441d-b818-e7203ba5b4c5",
+    "f9bad6d8-839d-4cdb-86b5-f0192effe23a",
+    "cc53e3be-1cb1-4477-938a-40a68ea1a05c",
+    "3429a682-5333-4467-9b01-1cfc2c2ed64c",
+    "f39dd8cb-80f8-4952-ab6c-d9117065c6d6",
+    "33044390-a2c0-40fb-9d98-5137f27125f0",
+    "6df5f8ad-aa0f-400c-ae82-a2d9e7ae8bab",
+    "06ca471f-ae4e-48e0-8a3f-88add5cbf207",
+    "178ad271-5956-4a1d-9c0b-dfd2e7bc7b2e",
+    "436c62f3-7264-4904-908a-096b34fa86ee",
+    "8316068f-1568-4de7-a722-fd9763dead8e",
+    "f3d63c93-bcee-41c8-94d9-76d991c68b99",
+    "2a306811-bf54-4b56-9436-6740feac5dbe",
+    "ef568e97-f3ae-403c-92ab-aaa66c0dfe62",
+    "4b9f816d-0c6f-4a57-b1a1-30c5c855abbf",
+    "4b8c8249-4f3b-4ef5-870e-041788eae3a0",
+    "c123ab08-0f16-4889-bce9-ad00e5025ae3",
+    "d73f0123-f569-47da-b7e6-6c5e10a030ab",
+    "908a7aa2-cc3a-420a-a3b0-0c8360df641b",
+    "cd2eed28-e344-4664-ba54-95bf3bd5f274",
+    "b4d625ed-f39b-455e-8053-96c5aaa50ad6",
+    "3447c7fc-15cf-4ab9-90b3-af8e780b3a42",
+    "bd6ef944-df0f-45ea-a517-5d936d89637d",
+    "3c6e0ded-3bd3-49d7-b46b-67662172b43c",
+    "55ae924a-d7c5-402d-a29a-a8d11edc059f",
+    "a01aa2ff-ee91-4abe-97c5-1ed1ca7c0c74",
+    "92dafe78-0264-48c7-b607-6a9342c73277",
+    "446718c4-8932-4d33-9cf2-66b54a9eaf6a",
+    "0ae4556a-fc35-4d88-bf21-9ae885890265",
+    "cf0d228a-615e-42ff-9d87-195a70e9ce3f",
+    "20e1425e-2589-4d6f-8056-b153b81884aa",
+    "32607c74-46a5-41b5-8beb-7f930fa9386e",
+    "bdac0342-6fd6-44de-87d7-bd9fdb5ced32",
+    "3dc5df7a-bcca-4005-bd3b-5b290fd05162",
+    "98f43975-cda3-41f4-b87c-e76b366c2cc4",
+    "a922077a-87ff-482c-b824-930ead241b30",
+    "cdaf37a5-6ff2-419a-bd9e-f639584fdddf",
+    "d7540879-2d62-49ba-85cf-b11fa75b52d6",
+    "23f76589-9595-4ddf-8dcb-a96194f5f6c5",
+    "f41cff00-71ac-475d-b682-1d1852afa2e9",
+    "cb02faa3-587d-4ba8-b978-4266ddd1ae1f",
+    "5c5998f9-4f08-434c-972f-18b7b5608905",
+    "be5ef998-f250-4533-8e4b-0699e33e20f3",
+    "27ff64ba-3aaf-456f-9a65-fa9a44ba5889",
+    "f5cb5acf-a2e4-43c4-826a-a9118cb08888",
+    "8a3cc76b-9c4b-41a5-b95c-dd9650d0e5a4",
+    "b700ce41-c121-4cfb-91bf-e52f01e5e1d2",
+    "8e185a5a-3630-4dbe-9eb3-9bf80ceabe3e",
+    "c52b835c-82ce-4235-92fe-f0ae2749045f",
+    "f70c3fcf-5b84-4dd0-b8a0-01fbdebf3cd0",
+    "028879f3-f7a6-4938-856c-c09e0fb2cdef",
+    "a88f7878-3acc-42a5-9961-4099b4aaaf95",
+    "4c008771-eb9b-41af-8d08-5190407a941f",
+    "66c585d9-a09d-4b87-862d-cd694a4bdbba",
+    "437b0dce-ef26-4814-9a15-8e855fbfbc79",
+    "2dbf01c4-f2da-4fff-9805-e50dc0fc64c3",
+    "76eb732e-b4e4-495d-8253-25d2b82d1451",
+    "eb3b87b8-5258-47e1-a2a3-05c4d57d8db5",
+    "6836c03d-e890-4a1e-8bb8-5437d269302d",
+    "5f600d3e-a6d2-484f-98c1-a2e9edddf9f1",
+    "55048463-41dd-4d26-a19f-bdef25cdf483",
+    "861e9d61-0770-4151-b09f-2123127c2194",
+    "70cee3cd-dda8-45d9-b6ce-0bff45513984",
+    "a963b9b1-9f85-420b-b89f-70cf2121042d",
+    "80c5aee3-2657-46a6-9e68-058eccb156ec",
+    "d4fceb42-3233-4e90-9d55-49ce8af35180",
+    "3fcdd862-6f6b-48b4-8511-269d6e254f27"
 }
+
 -- Initialize or restore global state
 _G.RiftScanner = _G.RiftScanner or {
     CurrentIndex = 1,
@@ -126,8 +126,8 @@ if not request then
     return
 end
 
--- MODIFIED: Send webhook function with URL parameter
-local function sendWebhook(title, fields, webhookUrl)
+-- Send webhook function
+local function sendWebhook(title, fields)
     print("Sending webhook: " .. title)
     
     local embed = {
@@ -139,12 +139,9 @@ local function sendWebhook(title, fields, webhookUrl)
 
     local payload = HttpService:JSONEncode({ embeds = { embed } })
 
-    -- Use the provided webhook URL or default to WEBHOOK_URL
-    webhookUrl = webhookUrl or WEBHOOK_URL
-
     local success, response = pcall(function()
         return request({
-            Url = webhookUrl,
+            Url = WEBHOOK_URL,
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
             Body = payload
@@ -196,19 +193,7 @@ local function scanRifts()
             if not _G.RiftScanner.SentNotifications[key] then
                 _G.RiftScanner.SentNotifications[key] = true
 
-                -- MODIFIED: Check for 25x multiplier
-                if multiplier and string.find(multiplier, "25x") then
-                    -- 25x multiplier found
-                    print("Found 25x multiplier rift: " .. name)
-                    sendWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
-                        { name = "Egg", value = name, inline = true },
-                        { name = "Multiplier", value = multiplier, inline = true },
-                        { name = "Time Left", value = timer, inline = true },
-                        { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
-                        { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
-                    }, WEBHOOK_URL_25X)  -- Use 25x webhook
-                elseif multiplier then
-                    -- Regular multiplier rift (unchanged)
+                if multiplier then
                     print("Found rift: " .. name .. " with " .. multiplier .. " luck")
                     sendWebhook("🌈 Rift Detected!", {
                         { name = "Egg", value = name, inline = true },
@@ -218,7 +203,6 @@ local function scanRifts()
                         { name = "Server ID", value = game.JobId, inline = false }
                     })
                 else
-                    -- Chest rift (unchanged)
                     print("Found chest: " .. name)
                     sendWebhook("🎁 Chest Detected!", {
                         { name = "Chest", value = name, inline = true },
@@ -264,7 +248,7 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rif
 ]]
 
 -- Hop to next server with advanced auto-continuation and error handling
--- THIS FUNCTION IS COMPLETELY UNCHANGED FROM YOUR ORIGINAL SCRIPT
+-- Hop to next server with improved error handling
 function hopToNextServer()
     local nextIndex = _G.RiftScanner.CurrentIndex + 1
     
@@ -337,7 +321,6 @@ function hopToNextServer()
         hopToNextServer()
     end
 end
-
 -- Main execution starts here
 print("Rift Scanner started")
 print("Current server index: " .. _G.RiftScanner.CurrentIndex)
