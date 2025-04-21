@@ -5,21 +5,25 @@ local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363451259016712192/OI
 local PLACE_ID = 85896571713843
 local endpoint = "https://slayervalue.com/serverlist/getservers.php"
 
+-- Check if script is already running to prevent duplicate instances
+if _G.RiftScanner and _G.RiftScanner.IsRunning then
+    print("⚠️ Rift Scanner already running, not starting a duplicate instance")
+    return
+end
+
 -- Services
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local GuiService = game:GetService("GuiService")  -- Added for disconnect handling
-local RunService = game:GetService("RunService")  -- For heartbeat
+local GuiService = game:GetService("GuiService")
+local RunService = game:GetService("RunService")
 
 -- Safe execution wrapper function to prevent script termination
 local function safeExecute(func, errorMessage)
     local success, result = pcall(func)
     if not success then
         print("ERROR (" .. (errorMessage or "unknown") .. "): " .. tostring(result))
-        -- Continue despite the error
         return false
     end
     return true, result
@@ -40,7 +44,9 @@ if not _G.RiftScanner then
         VisitedServers = {},
         LastTeleportAttempt = 0,
         LastActivity = tick(),
-        IsRunning = true
+        IsRunning = true,
+        InTeleportProcess = false,
+        LastJobIdFetch = 0
     }
     print("Scanner initialized")
 else
@@ -48,6 +54,8 @@ else
     _G.RiftScanner.VisitedServers = _G.RiftScanner.VisitedServers or {}
     _G.RiftScanner.LastActivity = tick()
     _G.RiftScanner.IsRunning = true
+    _G.RiftScanner.InTeleportProcess = false
+    _G.RiftScanner.LastJobIdFetch = _G.RiftScanner.LastJobIdFetch or 0
 end
 
 if not _G.RandomSeeded then
@@ -55,13 +63,28 @@ if not _G.RandomSeeded then
     _G.RandomSeeded = true
 end
 
--- Get job IDs from remote PHP script
+-- Get job IDs from remote PHP script with improved logging
 local jobIds = {}
 local function fetchJobIds()
+    -- Only fetch new IDs if it's been at least 3 minutes since last fetch
+    local currentTime = tick()
+    if currentTime - _G.RiftScanner.LastJobIdFetch < 180 and #jobIds > 0 then
+        print("🔄 Using cached job IDs (refreshed " .. math.floor((currentTime - _G.RiftScanner.LastJobIdFetch)/60) .. " min ago)")
+        return true
+    end
+    
+    print("🔄 Fetching fresh job IDs from website...")
+    _G.RiftScanner.LastJobIdFetch = currentTime
+    
     local success, response = pcall(function()
         return request({
             Url = endpoint,
-            Method = "GET"
+            Method = "GET",
+            Headers = {
+                ["Cache-Control"] = "no-cache",
+                ["Pragma"] = "no-cache",
+                ["Time"] = tostring(os.time()) -- Add timestamp to prevent caching
+            }
         }).Body
     end)
 
@@ -75,8 +98,36 @@ local function fetchJobIds()
     end)
 
     if successDecode and decoded and decoded.lines then
-        jobIds = decoded.lines
-        print("Successfully fetched " .. #jobIds .. " job IDs from server")
+        local newJobIds = decoded.lines
+        print("✅ Successfully fetched " .. #newJobIds .. " job IDs at " .. os.date("%H:%M:%S"))
+        
+        -- Compare with old job IDs to check if they've changed
+        local changed = false
+        if #jobIds ~= #newJobIds then
+            changed = true
+            print("✅ Number of job IDs changed: " .. #jobIds .. " -> " .. #newJobIds)
+        else
+            -- Check first few job IDs
+            for i = 1, math.min(3, #newJobIds) do
+                if i <= #jobIds and jobIds[i] ~= newJobIds[i] then
+                    changed = true
+                    print("✅ Job IDs have changed from previous fetch")
+                    break
+                end
+            end
+            
+            if not changed then
+                print("⚠️ Job IDs appear to be the same as previous fetch")
+            end
+        end
+        
+        -- Print sample job IDs
+        print("Sample job IDs:")
+        for i = 1, math.min(3, #newJobIds) do
+            print("  " .. i .. ": " .. newJobIds[i])
+        end
+        
+        jobIds = newJobIds
         return true
     else
         warn("❌ Failed to decode job IDs JSON")
@@ -124,7 +175,7 @@ if selectedJobId then
     print("🎯 Selected job ID:", selectedJobId)
     _G.RiftScanner = _G.RiftScanner or {}
     _G.RiftScanner.CurrentJobId = selectedJobId
-    _G.RiftScanner.CurrentIndex = randomIndex  -- Storing the randomIndex
+    _G.RiftScanner.CurrentIndex = randomIndex
 else
     print("❌ No valid job ID found.")
 end
@@ -135,9 +186,12 @@ local function setupDisconnectHandler()
     GuiService.ErrorMessageChanged:Connect(function()
         local errorMessage = GuiService:GetErrorMessage()
         if errorMessage and (errorMessage:find("Connection attempt failed") or errorMessage:find("Disconnected")) then
-            print("Detected disconnect, attempting emergency teleport...")
+            print("🚨 Detected disconnect, attempting emergency teleport...")
             
-            -- Get a random job ID from the script's list
+            -- Refresh job IDs first
+            fetchJobIds()
+            
+            -- Get a random job ID
             local randomIndex = math.random(1, #jobIds)
             local targetJobId = jobIds[randomIndex]
             
@@ -213,7 +267,7 @@ local function send25xWebhook(title, fields)
     end)
 end
 
--- Anti-crash watchdog timer with shorter timeouts
+-- Anti-crash watchdog timer
 local watchdogActive = false
 local function startWatchdog()
     if watchdogActive then return end
@@ -226,14 +280,14 @@ local function startWatchdog()
             -- If we've been in the same server for too long (3+ minutes), force a teleport
             local currentTime = tick()
             if currentTime - _G.RiftScanner.LastTeleportAttempt > 180 then
-                log("WATCHDOG: Detected potential hang, forcing teleport...")
+                log("🔄 WATCHDOG: Detected potential hang, forcing teleport...")
                 _G.RiftScanner.AlreadyScannedServer = true -- Force a teleport
                 safeExecute(function() hopToNextServer() end, "watchdog failsafe")
             end
             
             -- Check if script is still running
             if currentTime - _G.RiftScanner.LastActivity > 300 then
-                log("WATCHDOG: Script appears inactive, restarting...")
+                log("🔄 WATCHDOG: Script appears inactive, restarting...")
                 _G.RiftScanner.AlreadyScannedServer = true
                 safeExecute(function() scanRifts() end, "restart scanning")
             end
@@ -246,11 +300,13 @@ local function startHeartbeat()
     spawn(function()
         while wait(120) do -- Check every 2 minutes
             _G.RiftScanner.LastActivity = tick() -- Update timestamp
-            log("Heartbeat: Script is running")
+            log("💓 Heartbeat: Script is running")
             
-            -- Refresh job IDs occasionally
-            if math.random(1, 5) == 1 then -- 20% chance every 2 minutes
-                safeExecute(function() fetchJobIds() end, "refresh job IDs")
+            -- Refresh job IDs periodically
+            local currentTime = tick()
+            if currentTime - _G.RiftScanner.LastJobIdFetch > 300 then -- 5 minutes
+                log("🔄 Periodic job ID refresh")
+                safeExecute(function() fetchJobIds() end, "periodic refresh")
             end
         end
     end)
@@ -268,8 +324,8 @@ local function dismissErrorPopups()
                     end
                 end
                 
-                if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
-                    for _, gui in pairs(LocalPlayer.PlayerGui:GetDescendants()) do
+                if Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("PlayerGui") then
+                    for _, gui in pairs(Players.LocalPlayer.PlayerGui:GetDescendants()) do
                         if (gui:IsA("TextButton") and (gui.Text:match("OK") or gui.Text:match("Okay") or gui.Text:match("Close"))) then
                             pcall(function() gui.MouseButton1Click:Fire() end)
                         end
@@ -388,7 +444,7 @@ local function scanRifts()
     safeExecute(function() hopToNextServer() end, "hop after scan")
 end
 
--- Much simpler continuation script without JSON issues
+-- Continuation script with forced job ID refresh
 local CONTINUATION_SCRIPT = [[
 -- Initialize simple global state
 _G.RiftScanner = {
@@ -397,7 +453,9 @@ _G.RiftScanner = {
     VisitedServers = {},
     LastTeleportAttempt = 0,
     LastActivity = 0,
-    IsRunning = true
+    LastJobIdFetch = 0,
+    IsRunning = true,
+    InTeleportProcess = false
 }
 
 -- Wait for game to load
@@ -435,6 +493,9 @@ function hopToNextServer()
     -- Record when we last attempted to teleport
     _G.RiftScanner.LastTeleportAttempt = tick()
     _G.RiftScanner.LastActivity = tick()
+    
+    -- Refresh job IDs before server hop
+    safeExecute(function() fetchJobIds() end, "pre-hop refresh")
     
     -- Get a random server
     local nextIndex, nextJobId = getRandomServer()
@@ -502,7 +563,7 @@ function hopToNextServer()
     
     -- First attempt
     local success = safeExecute(function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
+        game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, Players.LocalPlayer)
     end, "teleport method 1")
     
     if not success then
@@ -576,12 +637,64 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
--- Wait for player character to load
-if not LocalPlayer.Character then
-    log("Waiting for character to load...")
-    LocalPlayer.CharacterAdded:Wait()
+-- Make sure LocalPlayer is available before proceeding
+local function waitForLocalPlayer()
+    local startTime = tick()
+    
+    while not Players.LocalPlayer do
+        if tick() - startTime > 30 then
+            log("WARNING: Timeout waiting for LocalPlayer, continuing anyway...")
+            break
+        end
+        wait(1)
+    end
+    
+    -- Now wait for character if LocalPlayer exists
+    if Players.LocalPlayer then
+        local charWaitStart = tick()
+        
+        -- Only wait for Character if LocalPlayer exists and has no Character yet
+        if not Players.LocalPlayer.Character then
+            log("Waiting for character to load...")
+            
+            -- Set up a timeout for character loading
+            spawn(function()
+                wait(15)  -- Wait max 15 seconds for character
+                if _G.RiftScanner.WaitingForChar then
+                    _G.RiftScanner.WaitingForChar = false
+                    log("Character wait timed out, continuing anyway...")
+                end
+            end)
+            
+            -- Wait for character with timeout
+            _G.RiftScanner.WaitingForChar = true
+            
+            -- Use CharacterAdded event with a backup timeout
+            local charLoaded = false
+            
+            -- Set up event connection
+            local connection
+            connection = Players.LocalPlayer.CharacterAdded:Connect(function()
+                charLoaded = true
+                _G.RiftScanner.WaitingForChar = false
+                if connection then connection:Disconnect() end
+            end)
+            
+            -- Wait until either character loads or timeout
+            while _G.RiftScanner.WaitingForChar and not charLoaded do
+                wait(0.1)
+            end
+            
+            if connection then connection:Disconnect() end
+        end
+    end
+    
+    -- Extra wait to be safe
     wait(3)
 end
+
+-- Wait for LocalPlayer and Character safely
+waitForLocalPlayer()
 
 -- Wait a bit for everything to initialize
 log("Waiting before starting scan...")
