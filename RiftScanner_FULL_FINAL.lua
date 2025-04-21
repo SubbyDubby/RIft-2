@@ -40,7 +40,10 @@ end
 
 -- Get job IDs from remote PHP script
 local success, response = pcall(function()
-    return HttpService:GetAsync(endpoint)
+    return request({
+        Url = endpoint,
+        Method = "GET"
+    }).Body
 end)
 
 if not success then
