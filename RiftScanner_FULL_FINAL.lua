@@ -46,8 +46,7 @@ if not _G.RiftScanner then
         LastActivity = tick(),
         IsRunning = true,
         InTeleportProcess = false,
-        LastJobIdFetch = 0,
-        FetchCount = 0  -- Track number of successful fetches
+        LastJobIdFetch = 0
     }
     print("Scanner initialized")
 else
@@ -57,7 +56,6 @@ else
     _G.RiftScanner.IsRunning = true
     _G.RiftScanner.InTeleportProcess = false
     _G.RiftScanner.LastJobIdFetch = _G.RiftScanner.LastJobIdFetch or 0
-    _G.RiftScanner.FetchCount = _G.RiftScanner.FetchCount or 0
 end
 
 if not _G.RandomSeeded then
@@ -65,30 +63,24 @@ if not _G.RandomSeeded then
     _G.RandomSeeded = true
 end
 
--- Get job IDs from remote PHP script with improved logging
+-- Get job IDs from remote PHP script with aggressive anti-caching
 local jobIds = {}
-local function fetchJobIds(forceFetch)
-    -- Only fetch new IDs if it's been at least 3 minutes since last fetch or force fetch
-    local currentTime = tick()
-    if not forceFetch and currentTime - _G.RiftScanner.LastJobIdFetch < 180 and #jobIds > 0 then
-        print("🔄 Using cached job IDs (refreshed " .. math.floor((currentTime - _G.RiftScanner.LastJobIdFetch)/60) .. " min ago)")
-        return true
-    end
+local function fetchJobIds()
+    -- Generate a completely unique URL with timestamp and random values
+    local cacheBuster = os.time() .. "-" .. math.random(100000, 999999)
+    local fetchUrl = endpoint .. "?no_cache=" .. cacheBuster
     
-    print("🔄 Fetching fresh job IDs from website...")
-    _G.RiftScanner.LastJobIdFetch = currentTime
-    
-    -- IMPORTANT: Add unique timestamp to prevent caching
-    local uniqueTimestamp = os.time() .. "-" .. math.random(1000, 9999)
+    print("🔄 Fetching fresh job IDs from website")
     
     local success, response = pcall(function()
         return request({
-            Url = endpoint .. "?t=" .. uniqueTimestamp,  -- Add cache-busting parameter
+            Url = fetchUrl,
             Method = "GET",
             Headers = {
                 ["Cache-Control"] = "no-cache, no-store, must-revalidate",
                 ["Pragma"] = "no-cache",
-                ["Expires"] = "0"
+                ["Expires"] = "0",
+                ["X-Random"] = cacheBuster  -- Add unique header too
             }
         }).Body
     end)
@@ -98,69 +90,36 @@ local function fetchJobIds(forceFetch)
         return false
     end
 
-    -- Print the raw response for debugging
-    print("Raw response first 100 chars: " .. response:sub(1, 100))
-
     local successDecode, decoded = pcall(function()
         return HttpService:JSONDecode(response)
     end)
 
     if successDecode and decoded and decoded.lines then
-        local newJobIds = decoded.lines
-        _G.RiftScanner.FetchCount = _G.RiftScanner.FetchCount + 1
+        -- Always assign fresh job IDs, never re-use the old ones
+        jobIds = {}  -- Clear existing job IDs
         
-        print("✅ Successfully fetched " .. #newJobIds .. " job IDs (Fetch #" .. _G.RiftScanner.FetchCount .. ")")
-        
-        -- EXTENSIVE DEBUGGING - Compare with website data
-        if #newJobIds > 0 then
-            print("🔍 First job ID from response: " .. newJobIds[1])
-            
-            -- Check if first ID matches expected format
-            if newJobIds[1]:find("%-") and #newJobIds[1] > 30 then
-                print("✅ Job ID format looks valid")
-            else
-                print("⚠️ Job ID format looks suspicious")
-            end
-            
-            -- Print multiple sample IDs to verify
-            print("Sample job IDs from fetch:")
-            for i = 1, math.min(5, #newJobIds) do
-                print("  " .. i .. ": " .. newJobIds[i])
-            end
-            
-            -- Compare with old job IDs
-            if #jobIds > 0 then
-                local matchCount = 0
-                local totalCheck = math.min(10, #jobIds, #newJobIds)
-                
-                for i = 1, totalCheck do
-                    if jobIds[i] == newJobIds[i] then
-                        matchCount = matchCount + 1
-                    end
-                end
-                
-                if matchCount == totalCheck then
-                    print("⚠️ WARNING: First " .. totalCheck .. " job IDs are identical to previous fetch")
-                else
-                    print("✅ Job IDs have changed: " .. (totalCheck - matchCount) .. " of " .. totalCheck .. " checked IDs are different")
-                end
-            end
-        else
-            print("⚠️ No job IDs found in the response!")
+        -- Copy new job IDs to the array
+        for _, id in ipairs(decoded.lines) do
+            table.insert(jobIds, id)
         end
         
-        -- Assign the new job IDs
-        jobIds = newJobIds
+        print("✅ Successfully fetched " .. #jobIds .. " job IDs")
+        _G.RiftScanner.LastJobIdFetch = tick()
+        
+        -- Print first job ID to verify
+        if #jobIds > 0 then
+            print("First job ID: " .. jobIds[1])
+        end
+        
         return true
     else
-        warn("❌ Failed to decode job IDs JSON - Response may not be valid JSON")
-        print("JSON Decode Error Response: " .. response:sub(1, 200))
+        warn("❌ Failed to decode job IDs JSON")
         return false
     end
 end
 
--- Initial fetch of job IDs - with forced refresh
-if not fetchJobIds(true) then
+-- Initial fetch of job IDs
+if not fetchJobIds() then
     print("Using backup job IDs...")
     -- Backup hardcoded job IDs in case the server is down
     jobIds = {
@@ -168,40 +127,6 @@ if not fetchJobIds(true) then
         "f875dd14-0512-411c-aa29-5a0c003103c9",
         "3fe28945-6564-4431-a5f1-5dbe7f16a585"
     }
-end
-
--- Function to get a truly random server (not the current one)
-local function getRandomServer()
-    if not jobIds or #jobIds == 0 then
-        warn("⚠️ No job IDs available, attempting to fetch new ones...")
-        if fetchJobIds(true) and #jobIds > 0 then
-            print("✅ Successfully refreshed job IDs")
-        else
-            warn("⚠️ Still no job IDs available after refresh attempt")
-            return nil
-        end
-    end
-
-    local randomIndex
-    local attempts = 0
-
-    repeat
-        randomIndex = math.random(1, #jobIds)
-        attempts += 1
-    until jobIds[randomIndex] ~= game.JobId or attempts >= 5
-
-    return randomIndex, jobIds[randomIndex]
-end
-
--- Example usage
-local randomIndex, selectedJobId = getRandomServer()
-if selectedJobId then
-    print("🎯 Selected job ID:", selectedJobId)
-    _G.RiftScanner = _G.RiftScanner or {}
-    _G.RiftScanner.CurrentJobId = selectedJobId
-    _G.RiftScanner.CurrentIndex = randomIndex
-else
-    print("❌ No valid job ID found.")
 end
 
 -- Add this function to handle disconnections
@@ -213,7 +138,7 @@ local function setupDisconnectHandler()
             print("🚨 Detected disconnect, attempting emergency teleport...")
             
             -- Refresh job IDs first
-            fetchJobIds(true)
+            fetchJobIds()
             
             -- Get a random job ID
             local randomIndex = math.random(1, #jobIds)
@@ -328,7 +253,7 @@ local function startHeartbeat()
             
             -- Always refresh job IDs every 2 minutes
             log("🔄 Periodic job ID refresh")
-            safeExecute(function() fetchJobIds(true) end, "periodic refresh")
+            safeExecute(function() fetchJobIds() end, "periodic refresh")
         end
     end)
 end
@@ -476,8 +401,7 @@ _G.RiftScanner = {
     LastActivity = 0,
     LastJobIdFetch = 0,
     IsRunning = true,
-    InTeleportProcess = false,
-    FetchCount = 0
+    InTeleportProcess = false
 }
 
 -- Wait for game to load
@@ -501,7 +425,7 @@ end)
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
--- Hop to next server - simplified for reliability
+-- Hop to next server with improved fresh ID fetching
 function hopToNextServer()
     -- Make sure we're not already in a teleport process
     if _G.RiftScanner.InTeleportProcess then
@@ -516,28 +440,26 @@ function hopToNextServer()
     _G.RiftScanner.LastTeleportAttempt = tick()
     _G.RiftScanner.LastActivity = tick()
     
-    -- Always refresh job IDs before server hop
-    safeExecute(function() fetchJobIds(true) end, "pre-hop refresh")
+    -- Always refresh job IDs before every hop
+    fetchJobIds()
     
-    -- Get a random server
-    local nextIndex, nextJobId = getRandomServer()
+    -- Get a random server from the refreshed list
+    local randomIndex = math.random(1, #jobIds)
+    local nextJobId = jobIds[randomIndex]
     
     -- Make sure we got a valid job ID
     if not nextJobId then
         log("Failed to get a valid job ID, retrying...")
         _G.RiftScanner.InTeleportProcess = false
         wait(2)
-        safeExecute(function() fetchJobIds(true) end, "retry fetch")
+        safeExecute(function() fetchJobIds() end, "retry fetch")
         wait(1)
         safeExecute(function() hopToNextServer() end, "retry hop")
         return
     end
     
     -- Log teleport attempt
-    log("Hopping to server " .. nextIndex .. " with JobID: " .. nextJobId)
-    
-    -- Update the current index
-    _G.RiftScanner.CurrentIndex = nextIndex
+    log("Hopping to server index " .. randomIndex .. " with JobID: " .. nextJobId)
     
     -- Add to visited servers
     _G.RiftScanner.VisitedServers[nextJobId] = true
