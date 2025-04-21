@@ -10,6 +10,7 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local GuiService = game:GetService("GuiService") -- Added for disconnect handling
 
 -- Get the appropriate request function
 local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or getgenv().request
@@ -18,19 +19,22 @@ if not request then
     return
 end
 
-
 -- Initialize or restore global state
 if not _G.RiftScanner then
     _G.RiftScanner = {
         SentNotifications = {},
         AlreadyScannedServer = false,
         VisitedServers = {},
-        LastTeleportAttempt = 0
+        LastTeleportAttempt = 0,
+        LastLogMessage = "", -- Track last log message to prevent duplicates
+        InTeleportProcess = false -- Flag to prevent duplicate teleport calls
     }
     print("Scanner initialized")
 else
     _G.RiftScanner.LastTeleportAttempt = _G.RiftScanner.LastTeleportAttempt or 0
     _G.RiftScanner.VisitedServers = _G.RiftScanner.VisitedServers or {}
+    _G.RiftScanner.LastLogMessage = _G.RiftScanner.LastLogMessage or ""
+    _G.RiftScanner.InTeleportProcess = false
 end
 
 if not _G.RandomSeeded then
@@ -39,28 +43,37 @@ if not _G.RandomSeeded then
 end
 
 -- Get job IDs from remote PHP script
-local success, response = pcall(function()
-    return request({
-        Url = endpoint,
-        Method = "GET"
-    }).Body
-end)
+local jobIds = {}
+local function fetchJobIds()
+    local success, response = pcall(function()
+        return request({
+            Url = endpoint,
+            Method = "GET"
+        }).Body
+    end)
 
-if not success then
-    warn("❌ Failed to fetch job IDs: " .. tostring(response))
-    return
+    if not success then
+        warn("❌ Failed to fetch job IDs: " .. tostring(response))
+        return false
+    end
+
+    local successDecode, decoded = pcall(function()
+        return HttpService:JSONDecode(response)
+    end)
+
+    if successDecode and decoded and decoded.lines then
+        jobIds = decoded.lines
+        print("✅ Successfully fetched " .. #jobIds .. " job IDs from the website")
+        return true
+    else
+        warn("❌ Failed to decode job IDs JSON")
+        return false
+    end
 end
 
-local jobIds
-local successDecode, decoded = pcall(function()
-    return HttpService:JSONDecode(response)
-end)
-
-if successDecode and decoded and decoded.lines then
-    jobIds = decoded.lines
-else
-    warn("❌ Failed to decode job IDs JSON")
-    return
+-- Initial fetch of job IDs
+if not fetchJobIds() then
+    return -- Exit if we couldn't get job IDs
 end
 
 -- Function to get a truly random server (not the current one)
@@ -92,9 +105,72 @@ else
     print("❌ No valid job ID found.")
 end
 
--- Simple logger
+-- Add function to handle disconnections
+local function setupDisconnectHandler()
+    -- Handle disconnection errors
+    GuiService.ErrorMessageChanged:Connect(function()
+        local errorMessage = GuiService:GetErrorMessage()
+        if errorMessage and (errorMessage:find("Connection attempt failed") or errorMessage:find("Disconnected")) then
+            print("⚠️ Detected disconnect, attempting emergency teleport...")
+            
+            -- Get a random job ID from the script's list
+            local randomIndex = math.random(1, #jobIds)
+            local targetJobId = jobIds[randomIndex]
+            
+            print("🚀 Emergency teleport to job ID: " .. targetJobId)
+            
+            -- Try to teleport to a server from our list
+            pcall(function()
+                game:GetService('TeleportService'):TeleportToPlaceInstance(PLACE_ID, targetJobId, game.Players.LocalPlayer)
+            end)
+            
+            -- Wait a bit in case the first teleport fails
+            wait(1)
+            
+            -- Try alternative teleport methods if still here
+            pcall(function()
+                TeleportService:TeleportToPlaceInstance(PLACE_ID, targetJobId)
+            end)
+            
+            -- Third attempt with exploit-specific method
+            if getgenv().teleport then
+                pcall(function()
+                    getgenv().teleport(PLACE_ID, targetJobId)
+                end)
+            end
+        end
+    end)
+    
+    -- Also set up a player removing handler as backup
+    Players.PlayerRemoving:Connect(function(player)
+        if player == LocalPlayer then
+            print("⚠️ Player disconnecting, attempting emergency teleport...")
+            
+            -- Get a random job ID
+            local randomIndex = math.random(1, #jobIds)
+            local targetJobId = jobIds[randomIndex]
+            
+            -- Try to teleport
+            pcall(function()
+                game:GetService('TeleportService'):TeleportToPlaceInstance(PLACE_ID, targetJobId, game.Players.LocalPlayer)
+            end)
+            
+            wait(1)
+            
+            pcall(function()
+                TeleportService:TeleportToPlaceInstance(PLACE_ID, targetJobId)
+            end)
+        end
+    end)
+end
+
+-- Simple logger with duplicate prevention
 local function log(message)
-    print(message)
+    -- Only print if different from last message
+    if message ~= _G.RiftScanner.LastLogMessage then
+        print(message)
+        _G.RiftScanner.LastLogMessage = message
+    end
 end
 
 -- Send webhook function - no console output
@@ -152,7 +228,7 @@ local function startWatchdog()
             -- If we've been in the same server for too long (3+ minutes), force a teleport
             local currentTime = tick()
             if currentTime - _G.RiftScanner.LastTeleportAttempt > 180 then
-                log("WATCHDOG: Detected potential hang, forcing teleport...")
+                log("⚠️ WATCHDOG: Detected potential hang, forcing teleport...")
                 _G.RiftScanner.AlreadyScannedServer = true -- Force a teleport
                 pcall(function() hopToNextServer() end)
             end
@@ -184,7 +260,7 @@ local function dismissErrorPopups()
     end)
 end
 
--- Scan for rifts - minimal console output
+-- Scan for rifts - minimal console output and faster execution
 local function scanRifts()
     -- Skip scanning if we already scanned this server
     if _G.RiftScanner.AlreadyScannedServer then
@@ -271,27 +347,29 @@ local function scanRifts()
     
     -- After scanning, wait before hopping - reduced wait time
     log("Waiting before moving to next server...")
-    wait(5)
+    wait(3) -- Reduced from 5 to 3 seconds for faster server hopping
     hopToNextServer()
 end
 
--- Much simpler continuation script without JSON issues
+-- Updated continuation script to ensure job IDs are fetched
 local CONTINUATION_SCRIPT = [[
 -- Initialize simple global state
 _G.RiftScanner = {
     SentNotifications = {},
     AlreadyScannedServer = false,
     VisitedServers = {},
-    LastTeleportAttempt = 0
+    LastTeleportAttempt = 0,
+    LastLogMessage = "",
+    InTeleportProcess = false
 }
 
 -- Wait for game to load
 if not game:IsLoaded() then game.Loaded:Wait() end
-wait(3)
+wait(2) -- Reduced from 3 to 2 seconds
 
 -- Start auto-dismiss for popups
 spawn(function()
-    wait(2)
+    wait(1)
     pcall(function()
         for _, gui in pairs(game:GetService("CoreGui"):GetDescendants()) do
             if (gui:IsA("TextButton") and (gui.Text:match("OK") or gui.Text:match("Okay") or gui.Text:match("Close"))) then
@@ -306,15 +384,23 @@ end)
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
--- Hop to next server - simplified for reliability
+-- Hop to next server - optimized for reliability and preventing duplicate calls
 function hopToNextServer()
+    -- Prevent duplicate teleport attempts
+    if _G.RiftScanner.InTeleportProcess then
+        return
+    end
+    
+    -- Set flag to indicate we're in teleport process
+    _G.RiftScanner.InTeleportProcess = true
+    
     -- Record when we last attempted to teleport
     _G.RiftScanner.LastTeleportAttempt = tick()
     
     -- Get a random server
     local nextIndex, nextJobId = getRandomServer()
     
-    -- Log teleport attempt
+    -- Log teleport attempt - with duplicate prevention
     log("Hopping to server " .. nextIndex .. " with JobID: " .. nextJobId)
     
     -- Update the current index
@@ -335,11 +421,12 @@ function hopToNextServer()
     -- Set up a failsafe timer for teleport failure
     local currentJob = game.JobId
     spawn(function()
-        wait(10)
+        wait(8) -- Reduced from 10 to 8 seconds for faster recovery
         
         -- Check if we're still in the same server
         if game.JobId == currentJob then
             log("Teleport failed. Trying another server...")
+            _G.RiftScanner.InTeleportProcess = false -- Reset flag
             
             -- Try a different random server
             hopToNextServer()
@@ -356,21 +443,21 @@ function hopToNextServer()
         end
     end)
     
-    -- Try all teleport methods
+    -- Try all teleport methods - faster with less waiting
     
-    -- First attempt
+    -- First attempt with your specified method
     pcall(function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
+        game:GetService('TeleportService'):TeleportToPlaceInstance(PLACE_ID, nextJobId, game.Players.LocalPlayer)
     end)
     
-    wait(1)
+    wait(0.5) -- Reduced from 1 to 0.5 seconds
     
     -- Second attempt
     pcall(function()
         TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
     end)
     
-    wait(1)
+    wait(0.5) -- Reduced from 1 to 0.5 seconds
     
     -- Third attempt with exploit-specific method
     if getgenv().teleport then
@@ -386,6 +473,9 @@ startWatchdog()
 -- Start auto-dismiss for popups
 dismissErrorPopups()
 
+-- Setup disconnect handler
+setupDisconnectHandler()
+
 -- Main execution starts here
 print("Rift Scanner started")
 
@@ -399,12 +489,12 @@ end
 if not LocalPlayer.Character then
     log("Waiting for character to load...")
     LocalPlayer.CharacterAdded:Wait()
-    wait(3)
+    wait(2) -- Reduced from 3 to 2 seconds
 end
 
 -- Wait a bit for everything to initialize
 log("Waiting before starting scan...")
-wait(5)
+wait(3) -- Reduced from 5 to 3 seconds
 
 -- Reset AlreadyScannedServer flag for this run
 _G.RiftScanner.AlreadyScannedServer = false
