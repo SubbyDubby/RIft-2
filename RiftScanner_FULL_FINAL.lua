@@ -4,30 +4,12 @@ local WEBHOOK_URL = "https://discord.com/api/webhooks/1363251024210432164/B26f2T
 local WEBHOOK_URL_25X = "https://discord.com/api/webhooks/1363451259016712192/OIMNA2MKvtfFW2IZOj5zDyoqhDYFlV-uU1GARyJwWSPSVHQzDAvSThojSOf1n9f5E6de"
 local PLACE_ID = 85896571713843
 local endpoint = "https://slayervalue.com/serverlist/getservers.php"
-
--- Check if script is already running to prevent duplicate instances
-if _G.RiftScanner and _G.RiftScanner.IsRunning then
-    print("⚠️ Rift Scanner already running, not starting a duplicate instance")
-    return
-end
-
 -- Services
 local Workspace = game:GetService("Workspace")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local Players = game:GetService("Players")
-local GuiService = game:GetService("GuiService")
-local RunService = game:GetService("RunService")
-
--- Safe execution wrapper function to prevent script termination
-local function safeExecute(func, errorMessage)
-    local success, result = pcall(func)
-    if not success then
-        print("ERROR (" .. (errorMessage or "unknown") .. "): " .. tostring(result))
-        return false
-    end
-    return true, result
-end
+local LocalPlayer = Players.LocalPlayer
 
 -- Get the appropriate request function
 local request = http_request or request or (syn and syn.request) or (fluxus and fluxus.request) or getgenv().request
@@ -36,26 +18,19 @@ if not request then
     return
 end
 
+
 -- Initialize or restore global state
 if not _G.RiftScanner then
     _G.RiftScanner = {
         SentNotifications = {},
         AlreadyScannedServer = false,
         VisitedServers = {},
-        LastTeleportAttempt = 0,
-        LastActivity = tick(),
-        IsRunning = true,
-        InTeleportProcess = false,
-        LastJobIdFetch = 0
+        LastTeleportAttempt = 0
     }
     print("Scanner initialized")
 else
     _G.RiftScanner.LastTeleportAttempt = _G.RiftScanner.LastTeleportAttempt or 0
     _G.RiftScanner.VisitedServers = _G.RiftScanner.VisitedServers or {}
-    _G.RiftScanner.LastActivity = tick()
-    _G.RiftScanner.IsRunning = true
-    _G.RiftScanner.InTeleportProcess = false
-    _G.RiftScanner.LastJobIdFetch = _G.RiftScanner.LastJobIdFetch or 0
 end
 
 if not _G.RandomSeeded then
@@ -63,110 +38,58 @@ if not _G.RandomSeeded then
     _G.RandomSeeded = true
 end
 
--- Get job IDs from remote PHP script with aggressive anti-caching
-local jobIds = {}
-local function fetchJobIds()
-    -- Generate a completely unique URL with timestamp and random values
-    local cacheBuster = os.time() .. "-" .. math.random(100000, 999999)
-    local fetchUrl = endpoint .. "?no_cache=" .. cacheBuster
-    
-    print("🔄 Fetching fresh job IDs from website")
-    
-    local success, response = pcall(function()
-        return request({
-            Url = fetchUrl,
-            Method = "GET",
-            Headers = {
-                ["Cache-Control"] = "no-cache, no-store, must-revalidate",
-                ["Pragma"] = "no-cache",
-                ["Expires"] = "0",
-                ["X-Random"] = cacheBuster  -- Add unique header too
-            }
-        }).Body
-    end)
+-- Get job IDs from remote PHP script
+local success, response = pcall(function()
+    return request({
+        Url = endpoint,
+        Method = "GET"
+    }).Body
+end)
 
-    if not success then
-        warn("❌ Failed to fetch job IDs: " .. tostring(response))
-        return false
-    end
-
-    local successDecode, decoded = pcall(function()
-        return HttpService:JSONDecode(response)
-    end)
-
-    if successDecode and decoded and decoded.lines then
-        -- Always assign fresh job IDs, never re-use the old ones
-        jobIds = {}  -- Clear existing job IDs
-        
-        -- Copy new job IDs to the array
-        for _, id in ipairs(decoded.lines) do
-            table.insert(jobIds, id)
-        end
-        
-        print("✅ Successfully fetched " .. #jobIds .. " job IDs")
-        _G.RiftScanner.LastJobIdFetch = tick()
-        
-        -- Print first job ID to verify
-        if #jobIds > 0 then
-            print("First job ID: " .. jobIds[1])
-        end
-        
-        return true
-    else
-        warn("❌ Failed to decode job IDs JSON")
-        return false
-    end
+if not success then
+    warn("❌ Failed to fetch job IDs: " .. tostring(response))
+    return
 end
 
--- Initial fetch of job IDs
-if not fetchJobIds() then
-    print("Using backup job IDs...")
-    -- Backup hardcoded job IDs in case the server is down
-    jobIds = {
-        "35cac887-cc04-4af7-acbd-c00d30962226",
-        "f875dd14-0512-411c-aa29-5a0c003103c9",
-        "3fe28945-6564-4431-a5f1-5dbe7f16a585"
-    }
+local jobIds
+local successDecode, decoded = pcall(function()
+    return HttpService:JSONDecode(response)
+end)
+
+if successDecode and decoded and decoded.lines then
+    jobIds = decoded.lines
+else
+    warn("❌ Failed to decode job IDs JSON")
+    return
 end
 
--- Add this function to handle disconnections
-local function setupDisconnectHandler()
-    -- Handle disconnection errors
-    GuiService.ErrorMessageChanged:Connect(function()
-        local errorMessage = GuiService:GetErrorMessage()
-        if errorMessage and (errorMessage:find("Connection attempt failed") or errorMessage:find("Disconnected")) then
-            print("🚨 Detected disconnect, attempting emergency teleport...")
-            
-            -- Refresh job IDs first
-            fetchJobIds()
-            
-            -- Get a random job ID
-            local randomIndex = math.random(1, #jobIds)
-            local targetJobId = jobIds[randomIndex]
-            
-            print("Emergency teleport to job ID: " .. targetJobId)
-            
-            -- Try to teleport to a server from our list
-            pcall(function()
-                game:GetService('TeleportService'):TeleportToPlaceInstance(PLACE_ID, targetJobId, game.Players.LocalPlayer)
-            end)
-            
-            -- Wait a bit in case the first teleport fails
-            wait(2)
-            
-            -- Try alternative teleport methods if still here
-            pcall(function()
-                TeleportService:TeleportToPlaceInstance(PLACE_ID, targetJobId)
-            end)
-            
-            -- Third attempt with exploit-specific method
-            if getgenv().teleport then
-                pcall(function()
-                    getgenv().teleport(PLACE_ID, targetJobId)
-                end)
-            end
-        end
-    end)
+-- Function to get a truly random server (not the current one)
+local function getRandomServer()
+    if not jobIds or #jobIds == 0 then
+        warn("⚠️ No job IDs available.")
+        return nil
+    end
+
+    local randomIndex
+    local attempts = 0
+
+    repeat
+        randomIndex = math.random(1, #jobIds)
+        attempts += 1
+    until jobIds[randomIndex] ~= game.JobId or attempts >= 5
+
+    return randomIndex, jobIds[randomIndex]
+end
+
+-- Example usage
+local randomIndex, selectedJobId = getRandomServer()
+if selectedJobId then
+    print("🎯 Selected job ID:", selectedJobId)
+    _G.RiftScanner = _G.RiftScanner or {}
+    _G.RiftScanner.CurrentJobId = selectedJobId
+    _G.RiftScanner.CurrentIndex = randomIndex  -- Storing the randomIndex
+else
+    print("❌ No valid job ID found.")
 end
 
 -- Simple logger
@@ -216,7 +139,7 @@ local function send25xWebhook(title, fields)
     end)
 end
 
--- Anti-crash watchdog timer
+-- Anti-crash watchdog timer with shorter timeouts
 local watchdogActive = false
 local function startWatchdog()
     if watchdogActive then return end
@@ -229,31 +152,10 @@ local function startWatchdog()
             -- If we've been in the same server for too long (3+ minutes), force a teleport
             local currentTime = tick()
             if currentTime - _G.RiftScanner.LastTeleportAttempt > 180 then
-                log("🔄 WATCHDOG: Detected potential hang, forcing teleport...")
+                log("WATCHDOG: Detected potential hang, forcing teleport...")
                 _G.RiftScanner.AlreadyScannedServer = true -- Force a teleport
-                safeExecute(function() hopToNextServer() end, "watchdog failsafe")
+                pcall(function() hopToNextServer() end)
             end
-            
-            -- Check if script is still running
-            if currentTime - _G.RiftScanner.LastActivity > 300 then
-                log("🔄 WATCHDOG: Script appears inactive, restarting...")
-                _G.RiftScanner.AlreadyScannedServer = true
-                safeExecute(function() scanRifts() end, "restart scanning")
-            end
-        end
-    end)
-end
-
--- Heartbeat system to track script activity
-local function startHeartbeat()
-    spawn(function()
-        while wait(120) do -- Check every 2 minutes
-            _G.RiftScanner.LastActivity = tick() -- Update timestamp
-            log("💓 Heartbeat: Script is running")
-            
-            -- Always refresh job IDs every 2 minutes
-            log("🔄 Periodic job ID refresh")
-            safeExecute(function() fetchJobIds() end, "periodic refresh")
         end
     end)
 end
@@ -270,8 +172,8 @@ local function dismissErrorPopups()
                     end
                 end
                 
-                if Players.LocalPlayer and Players.LocalPlayer:FindFirstChild("PlayerGui") then
-                    for _, gui in pairs(Players.LocalPlayer.PlayerGui:GetDescendants()) do
+                if LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui") then
+                    for _, gui in pairs(LocalPlayer.PlayerGui:GetDescendants()) do
                         if (gui:IsA("TextButton") and (gui.Text:match("OK") or gui.Text:match("Okay") or gui.Text:match("Close"))) then
                             pcall(function() gui.MouseButton1Click:Fire() end)
                         end
@@ -288,90 +190,73 @@ local function scanRifts()
     if _G.RiftScanner.AlreadyScannedServer then
         log("Server already scanned, moving to next server...")
         wait(1)
-        safeExecute(function() hopToNextServer() end, "hop after skip")
+        hopToNextServer()
         return
     end
-    
-    -- Update activity timestamp
-    _G.RiftScanner.LastActivity = tick()
     
     local foundRift = false
     local currentSeen = {}
 
     -- Look for the rifts folder
-    local success, riftFolder = safeExecute(function()
-        return Workspace:FindFirstChild("Rendered") and Workspace.Rendered:FindFirstChild("Rifts")
-    end, "find rifts folder")
-    
-    if success and riftFolder then
-        -- Loop through all rifts - with error handling
-        safeExecute(function()
-            for _, rift in pairs(riftFolder:GetChildren()) do
-                if not _G.RiftScanner.IsRunning then return end -- Stop if script was terminated
-                
-                if not rift:IsA("Model") then continue end
+    local riftFolder = Workspace:FindFirstChild("Rendered") and Workspace.Rendered:FindFirstChild("Rifts")
+    if not riftFolder then 
+        -- Silent failure, no console output
+    else
+        -- Loop through all rifts - silent operation
+        for _, rift in pairs(riftFolder:GetChildren()) do
+            if not rift:IsA("Model") then continue end
 
-                local name = rift.Name:lower()
-                local gui = rift:FindFirstChild("Display") and rift.Display:FindFirstChild("SurfaceGui")
-                if not gui then continue end
+            local name = rift.Name:lower()
+            local gui = rift:FindFirstChild("Display") and rift.Display:FindFirstChild("SurfaceGui")
+            if not gui then continue end
 
-                local timerLabel = gui:FindFirstChild("Timer")
-                local luckLabel = gui:FindFirstChild("Icon") and gui.Icon:FindFirstChild("Luck")
+            local timerLabel = gui:FindFirstChild("Timer")
+            local luckLabel = gui:FindFirstChild("Icon") and gui.Icon:FindFirstChild("Luck")
 
-                local timer = timerLabel and timerLabel.Text or nil
-                local multiplier = luckLabel and luckLabel.Text or nil
+            local timer = timerLabel and timerLabel.Text or nil
+            local multiplier = luckLabel and luckLabel.Text or nil
 
-                if not timer or timer == "" then continue end
+            if not timer or timer == "" then continue end
 
-                -- Y Position for height
-                local y = rift:GetPivot().Position.Y
-                local key = name .. "|" .. timer .. "|" .. (multiplier or "n/a") .. "|" .. y
-                currentSeen[key] = true
-                foundRift = true
+            -- Y Position for height
+            local y = rift:GetPivot().Position.Y
+            local key = name .. "|" .. timer .. "|" .. (multiplier or "n/a") .. "|" .. y
+            currentSeen[key] = true
+            foundRift = true
 
-                if not _G.RiftScanner.SentNotifications[key] then
-                    _G.RiftScanner.SentNotifications[key] = true
+            if not _G.RiftScanner.SentNotifications[key] then
+                _G.RiftScanner.SentNotifications[key] = true
 
-                    -- More robust pattern matching for 25x
-                    if multiplier and (string.find(tostring(multiplier):lower(), "25%s*x") or string.find(tostring(multiplier), "25")) then
-                        -- Debug output for 25x multipliers
-                        print("🌟 25X MULTIPLIER DETECTED! Sending to special webhook...")
-                        
-                        -- 25x multiplier found - use special webhook
-                        safeExecute(function()
-                            send25xWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
-                                { name = "Egg", value = name, inline = true },
-                                { name = "Multiplier", value = multiplier, inline = true },
-                                { name = "Time Left", value = timer, inline = true },
-                                { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
-                                { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
-                            })
-                        end, "send 25x webhook")
-                    elseif multiplier then
-                        -- Regular multiplier rift
-                        safeExecute(function()
-                            sendWebhook("🌈 Rift Detected!", {
-                                { name = "Egg", value = name, inline = true },
-                                { name = "Multiplier", value = multiplier, inline = true },
-                                { name = "Time Left", value = timer, inline = true },
-                                { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
-                                { name = "Server ID", value = game.JobId, inline = false }
-                            })
-                        end, "send regular webhook")
-                    else
-                        -- Chest rift
-                        safeExecute(function()
-                            sendWebhook("🎁 Chest Detected!", {
-                                { name = "Chest", value = name, inline = true },
-                                { name = "Time Left", value = timer, inline = true },
-                                { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
-                                { name = "Server ID", value = game.JobId, inline = false }
-                            })
-                        end, "send chest webhook")
-                    end
+                -- More robust pattern matching for 25x
+                if multiplier and (string.find(tostring(multiplier):lower(), "25%s*x") or string.find(tostring(multiplier), "25")) then
+                    -- 25x multiplier found - use special webhook
+                    send25xWebhook("🌈 25x MULTIPLIER RIFT FOUND!", {
+                        { name = "Egg", value = name, inline = true },
+                        { name = "Multiplier", value = multiplier, inline = true },
+                        { name = "Time Left", value = timer, inline = true },
+                        { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
+                        { name = "Join Server", value = "[Click to Join](https://slayervalue.com/roblox/join_game.php?placeId=" .. PLACE_ID .. "&jobId=" .. game.JobId .. ")", inline = false }
+                    })
+                elseif multiplier then
+                    -- Regular multiplier rift
+                    sendWebhook("🌈 Rift Detected!", {
+                        { name = "Egg", value = name, inline = true },
+                        { name = "Multiplier", value = multiplier, inline = true },
+                        { name = "Time Left", value = timer, inline = true },
+                        { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
+                        { name = "Server ID", value = game.JobId, inline = false }
+                    })
+                else
+                    -- Chest rift
+                    sendWebhook("🎁 Chest Detected!", {
+                        { name = "Chest", value = name, inline = true },
+                        { name = "Time Left", value = timer, inline = true },
+                        { name = "Height (Y)", value = tostring(math.floor(y)), inline = true },
+                        { name = "Server ID", value = game.JobId, inline = false }
+                    })
                 end
             end
-        end, "scan rifts loop")
+        end
 
         -- Clear despawned entries - silent operation
         for key in pairs(_G.RiftScanner.SentNotifications) do
@@ -387,21 +272,17 @@ local function scanRifts()
     -- After scanning, wait before hopping - reduced wait time
     log("Waiting before moving to next server...")
     wait(5)
-    safeExecute(function() hopToNextServer() end, "hop after scan")
+    hopToNextServer()
 end
 
--- Continuation script with forced job ID refresh
+-- Much simpler continuation script without JSON issues
 local CONTINUATION_SCRIPT = [[
 -- Initialize simple global state
 _G.RiftScanner = {
     SentNotifications = {},
     AlreadyScannedServer = false,
     VisitedServers = {},
-    LastTeleportAttempt = 0,
-    LastActivity = 0,
-    LastJobIdFetch = 0,
-    IsRunning = true,
-    InTeleportProcess = false
+    LastTeleportAttempt = 0
 }
 
 -- Wait for game to load
@@ -425,57 +306,30 @@ end)
 loadstring(game:HttpGet('https://raw.githubusercontent.com/SubbyDubby/Roblox-Rift-Scanner/main/Rift.lua'))()
 ]]
 
--- Hop to next server with improved fresh ID fetching
+-- Hop to next server - simplified for reliability
 function hopToNextServer()
-    -- Make sure we're not already in a teleport process
-    if _G.RiftScanner.InTeleportProcess then
-        log("Already in teleport process, waiting...")
-        return
-    end
-    
-    -- Set flag to indicate we're in teleport process
-    _G.RiftScanner.InTeleportProcess = true
-    
     -- Record when we last attempted to teleport
     _G.RiftScanner.LastTeleportAttempt = tick()
-    _G.RiftScanner.LastActivity = tick()
     
-    -- Always refresh job IDs before every hop
-    fetchJobIds()
-    
-    -- Get a random server from the refreshed list
-    local randomIndex = math.random(1, #jobIds)
-    local nextJobId = jobIds[randomIndex]
-    
-    -- Make sure we got a valid job ID
-    if not nextJobId then
-        log("Failed to get a valid job ID, retrying...")
-        _G.RiftScanner.InTeleportProcess = false
-        wait(2)
-        safeExecute(function() fetchJobIds() end, "retry fetch")
-        wait(1)
-        safeExecute(function() hopToNextServer() end, "retry hop")
-        return
-    end
+    -- Get a random server
+    local nextIndex, nextJobId = getRandomServer()
     
     -- Log teleport attempt
-    log("Hopping to server index " .. randomIndex .. " with JobID: " .. nextJobId)
+    log("Hopping to server " .. nextIndex .. " with JobID: " .. nextJobId)
+    
+    -- Update the current index
+    _G.RiftScanner.CurrentIndex = nextIndex
     
     -- Add to visited servers
     _G.RiftScanner.VisitedServers[nextJobId] = true
     
     -- Queue script to run after teleport - using simplified script without JSON
-    local scriptQueued = false
     if getgenv().queue_on_teleport then
-        scriptQueued = pcall(function() getgenv().queue_on_teleport(CONTINUATION_SCRIPT) end)
+        getgenv().queue_on_teleport(CONTINUATION_SCRIPT)
     elseif queue_on_teleport then
-        scriptQueued = pcall(function() queue_on_teleport(CONTINUATION_SCRIPT) end)
+        queue_on_teleport(CONTINUATION_SCRIPT)
     elseif syn and syn.queue_on_teleport then
-        scriptQueued = pcall(function() syn.queue_on_teleport(CONTINUATION_SCRIPT) end)
-    end
-    
-    if not scriptQueued then
-        log("WARNING: Failed to queue continuation script")
+        syn.queue_on_teleport(CONTINUATION_SCRIPT)
     end
     
     -- Set up a failsafe timer for teleport failure
@@ -484,93 +338,53 @@ function hopToNextServer()
         wait(10)
         
         -- Check if we're still in the same server
-        if game.JobId == currentJob and _G.RiftScanner.IsRunning then
+        if game.JobId == currentJob then
             log("Teleport failed. Trying another server...")
-            _G.RiftScanner.InTeleportProcess = false
             
             -- Try a different random server
-            safeExecute(function() hopToNextServer() end, "retry after fail")
+            hopToNextServer()
         end
     end)
     
     -- Dismiss any popups before teleporting
-    safeExecute(function()
+    pcall(function()
         for _, gui in pairs(game:GetService("CoreGui"):GetDescendants()) do
             if (gui:IsA("TextButton") and (gui.Text:match("OK") or gui.Text:match("Okay") or gui.Text:match("Close"))) then
                 pcall(function() gui.MouseButton1Click:Fire() end)
                 pcall(function() gui:Destroy() end)
             end
         end
-    end, "dismiss popups")
+    end)
     
-    -- Try all teleport methods with fallbacks
+    -- Try all teleport methods
     
     -- First attempt
-    local success = safeExecute(function()
-        game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, Players.LocalPlayer)
-    end, "teleport method 1")
+    pcall(function()
+        game:GetService("TeleportService"):TeleportToPlaceInstance(PLACE_ID, nextJobId, LocalPlayer)
+    end)
     
-    if not success then
-        wait(1)
-        
-        -- Second attempt
-        success = safeExecute(function()
-            TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
-        end, "teleport method 2")
-        
-        if not success then
-            wait(1)
-            
-            -- Third attempt with exploit-specific method
-            if getgenv().teleport then
-                success = safeExecute(function()
-                    getgenv().teleport(PLACE_ID, nextJobId)
-                end, "teleport method 3")
-            end
-        end
+    wait(1)
+    
+    -- Second attempt
+    pcall(function()
+        TeleportService:TeleportToPlaceInstance(PLACE_ID, nextJobId)
+    end)
+    
+    wait(1)
+    
+    -- Third attempt with exploit-specific method
+    if getgenv().teleport then
+        pcall(function()
+            getgenv().teleport(PLACE_ID, nextJobId)
+        end)
     end
-    
-    -- Reset flag after a delay in case teleport is still processing
-    spawn(function()
-        wait(8)
-        _G.RiftScanner.InTeleportProcess = false
-    end)
 end
 
--- Function to recover from errors
-local function setupErrorRecovery()
-    -- Ensure script keeps running even if there's an error
-    spawn(function()
-        while wait(60) do -- Check every minute
-            if _G.RiftScanner.IsRunning and tick() - _G.RiftScanner.LastActivity > 300 then
-                log("ERROR RECOVERY: Script appears stuck, restarting...")
-                
-                -- Reset state
-                _G.RiftScanner.AlreadyScannedServer = true
-                _G.RiftScanner.InTeleportProcess = false
-                _G.RiftScanner.LastActivity = tick()
-                
-                -- Try to continue
-                safeExecute(function() scanRifts() end, "recovery scan")
-            end
-        end
-    end)
-end
-
--- Function to prevent the script from being terminated
-local function preventTermination()
-    RunService.Heartbeat:Connect(function()
-        _G.RiftScanner.LastActivity = tick()
-    end)
-end
-
--- Start all monitoring systems
+-- Start anti-crash watchdog
 startWatchdog()
-startHeartbeat()
-setupErrorRecovery()
-preventTermination()
+
+-- Start auto-dismiss for popups
 dismissErrorPopups()
-setupDisconnectHandler()
 
 -- Main execution starts here
 print("Rift Scanner started")
@@ -581,64 +395,12 @@ if not game:IsLoaded() then
     game.Loaded:Wait()
 end
 
--- Make sure LocalPlayer is available before proceeding
-local function waitForLocalPlayer()
-    local startTime = tick()
-    
-    while not Players.LocalPlayer do
-        if tick() - startTime > 30 then
-            log("WARNING: Timeout waiting for LocalPlayer, continuing anyway...")
-            break
-        end
-        wait(1)
-    end
-    
-    -- Now wait for character if LocalPlayer exists
-    if Players.LocalPlayer then
-        local charWaitStart = tick()
-        
-        -- Only wait for Character if LocalPlayer exists and has no Character yet
-        if not Players.LocalPlayer.Character then
-            log("Waiting for character to load...")
-            
-            -- Set up a timeout for character loading
-            spawn(function()
-                wait(15)  -- Wait max 15 seconds for character
-                if _G.RiftScanner.WaitingForChar then
-                    _G.RiftScanner.WaitingForChar = false
-                    log("Character wait timed out, continuing anyway...")
-                end
-            end)
-            
-            -- Wait for character with timeout
-            _G.RiftScanner.WaitingForChar = true
-            
-            -- Use CharacterAdded event with a backup timeout
-            local charLoaded = false
-            
-            -- Set up event connection
-            local connection
-            connection = Players.LocalPlayer.CharacterAdded:Connect(function()
-                charLoaded = true
-                _G.RiftScanner.WaitingForChar = false
-                if connection then connection:Disconnect() end
-            end)
-            
-            -- Wait until either character loads or timeout
-            while _G.RiftScanner.WaitingForChar and not charLoaded do
-                wait(0.1)
-            end
-            
-            if connection then connection:Disconnect() end
-        end
-    end
-    
-    -- Extra wait to be safe
+-- Wait for player character to load
+if not LocalPlayer.Character then
+    log("Waiting for character to load...")
+    LocalPlayer.CharacterAdded:Wait()
     wait(3)
 end
-
--- Wait for LocalPlayer and Character safely
-waitForLocalPlayer()
 
 -- Wait a bit for everything to initialize
 log("Waiting before starting scan...")
@@ -646,17 +408,6 @@ wait(5)
 
 -- Reset AlreadyScannedServer flag for this run
 _G.RiftScanner.AlreadyScannedServer = false
-_G.RiftScanner.LastActivity = tick()
 
--- Start scanning with error handling
-safeExecute(function() scanRifts() end, "initial scan")
-
--- Final safety net in case the script gets stuck
-spawn(function()
-    wait(30)
-    if not _G.RiftScanner.AlreadyScannedServer then
-        log("SAFETY: Script may not have started properly, forcing start...")
-        _G.RiftScanner.AlreadyScannedServer = false
-        safeExecute(function() scanRifts() end, "safety scan")
-    end
-end)
+-- Start scanning
+scanRifts()
